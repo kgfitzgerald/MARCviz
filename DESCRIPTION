@@ -15,8 +15,10 @@ URL:
 BugReports: Show where users should address their reports to
     (if linked with GitHub, this will automatically refer the 
     user to the issues section)
-Depends: show the R version your package works with
-     (you always need to indicate a version number!)
+Depends: 
+    R (>= 4.3.1)
+    show the R version your package works with
+    (you always need to indicate a version number!)
 Imports: Show the pacakges that are required to run this package
     (here you always need to indicate a version number so that 
     potential conflicts with previous versions can be avoided!)
