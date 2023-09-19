@@ -16,10 +16,10 @@ BugReports:https://github.com/kgfitzgerald/MARCviz/issues
 Depends: 
     R (>= 4.3.1)
 Imports:
-    dplyr (>= 1.1.2)
-    metafor (>= 4.2.0)
-    stats (>= 4.3.1)
-    tibble (>= 3.2.1)
+    dplyr (>= 1.1.2),
+    metafor (>= 4.2.0),
+    stats (>= 4.3.1),
+    tibble (>= 3.2.1),
     plotly (>= 4.10.1)
 Suggests:
 VignetteBuilder:
