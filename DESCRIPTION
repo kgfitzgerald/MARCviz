@@ -9,7 +9,7 @@ Authors@R: c(
 Maintainer: The package maintainer <kfitzgerald@apu.edu>
 Description: This package produces a Meta-Analytic Rain Cloud (MARC) Plot.
     The MARC plot displays the relative weight of each study while providing a summary effect on its own plane.
-    This plot utilizes the y axis to for weight and the x axis for standardized mean difference (SMD).
+    This plot utilizes the y axis for weight and the x axis for standardized mean difference (SMD).
 License: What license is it under?
 URL: https://github.com/kgfitzgerald/MARCviz
 BugReports:https://github.com/kgfitzgerald/MARCviz/issues
