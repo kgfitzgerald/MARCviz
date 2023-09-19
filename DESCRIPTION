@@ -13,24 +13,15 @@ Description: This package produces a Meta-Analytic Rain Cloud (MARC) Plot.
 License: What license is it under?
 URL: https://github.com/kgfitzgerald/MARCviz
 BugReports:https://github.com/kgfitzgerald/MARCviz/issues
-    Show where users should address their reports to
-    (if linked with GitHub, this will automatically refer the 
-    user to the issues section)
 Depends: 
     R (>= 4.3.1)
-    show the R version your package works with
-    (you always need to indicate a version number!)
 Imports:
     dplyr (>= 1.1.2)
     metafor (>= 4.2.0)
     stats (>= 4.3.1)
     tibble (>= 3.2.1)
     plotly (>= 4.10.1)
-    Show the packages that are required to run this package
-    (here you always need to indicate a version number so that 
-    potential conflicts with previous versions can be avoided!)
-Suggests: Lists all the packages that you suggest but that are 
-    not necessarily required for the functionality of your package
+Suggests:
 VignetteBuilder:
 Encoding: UTF-8
 Language: en-US
