@@ -6,7 +6,7 @@ Authors@R: c(
     person("Kaitlyn", "Fitzgerald", email = "kfitzgerald@apu.edu", role = c("cre","aut")),
     person("Avery", "Charles", email = "acharles20@apu.edu", role = "aut"),
     person("David", "Khella", email = "dkhella20@apu.edu", role = "ctb"))
-Maintainer: The package maintainer <yourself@somewhere.net>
+Maintainer: The package maintainer <kfitzgerald@apu.edu>
 Description: This package produces a Meta-Analytic Rain Cloud (MARC) Plot.
     The MARC plot displays the relative weight of each study while providing a summary effect on its own plane.
     This plot utilizes the y axis to for weight and the x axis for standardized mean difference (SMD).
