@@ -13,11 +13,6 @@
 #' variables included in the data set"
 #' }
 #'
-#' @references "Essential if you do not use artificially generated data to
-#' indicate the source"
-#'
-#' @keywords "Allows you to indicate keywords"
-#'
 #' @examples "Finally gives you some room to showcase your data"
 #'
 #'
