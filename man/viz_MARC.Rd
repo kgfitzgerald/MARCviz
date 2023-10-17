@@ -18,7 +18,9 @@ viz_MARC(
   sizeref = NULL,
   width = 650,
   height = 425,
-  font_sizes = c(14, 10, 8, 9, 8, 7, 10)
+  font_sizes = c(14, 10, 8, 9, 8, 7, 10),
+  digits = 2,
+  max_marker_size = 50
 )
 }
 \arguments{
@@ -42,13 +44,17 @@ viz_MARC(
 
 \item{legend_data}{3x3 data.frame of vectors y, x, w_j_perc that give y-coordinates, x-coordinates, and weights to be plotted manually in the legend. Default is legend_data <- data.frame(y = c(ymax*.55, ymax*.45, ymax*.35), x = xmin*0.65, w_j_perc = c(.1, .01, .001))}
 
-\item{sizeref}{controls plotly argument that scales dots. (default set by sizeref <- 2.0 * max(MA_data$w_j_perc) / (50**2) as recommended by https://plotly.com/r/bubble-charts/)}
+\item{sizeref}{controls plotly argument that scales dots. (default set by sizeref <- 2.0 * max(MA_data$w_j_perc) / (max_marker_size**2) as recommended by https://plotly.com/r/bubble-charts/)}
 
 \item{width}{controls figure width, passed to plot_ly() argument (default = 650)}
 
 \item{height}{controls figure height, passed to plot_ly() argument (default = 425)}
 
 \item{font_sizes}{vector of 7 font sizes for annotations, in order: SUMMARY OF EVIDENCE, Average SMD & Weight, CI annotation, Increased/Decreased Scores, More/Less certain, Legend number labels, Legend Weight title (default = c(14, 10, 8, 9, 8, 7, 10))}
+
+\item{digits}{number of digits to round summary effect size and confidence interval bounds to (default = 2)}
+
+\item{max_marker_size}{maximum marker size, used in calculating sizeref if not specified separately (default = 50)}
 }
 \value{
 a plotly object
