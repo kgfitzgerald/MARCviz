@@ -3,7 +3,7 @@
 #' A subset of data from the World Health Organization Global Tuberculosis
 #' Report ...
 #'
-#' @format ## `who7`
+#' @format ## `viz_MA_data`
 #' A data frame with 7,240 rows and 60 columns:
 #' \describe{
 #'   \item{country}{Country name}
@@ -12,4 +12,4 @@
 #'   ...
 #' }
 #' @source <https://www.who.int/teams/global-tuberculosis-programme/data>
-"who7"
+"viz_MA_data"
