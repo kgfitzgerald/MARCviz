@@ -26,7 +26,26 @@
 #' @references This data set was generated for the statistical cognition experiment in Fitzgerald, Khella, Charles, & Tipton (2024).
 #' @keywords datasets
 #' @examples
+#' k = 10
+#' viz_adj_MARC(d_j = k10_data$d_j, se_j = k10_data$se_j, 
+#' study_labels = c(1:10), seed = 102,
+#' x_breaks = seq(-1, 1, 0.2), x_limit = c(-1, 1))
 #'
+#' k = 20
+#' viz_adj_MARC(d_j = k20_data$d_j, se_j = k20_data$se_j, 
+#' study_labels = c(1:20), seed = 102,
+#' x_breaks = seq(-1, 1, 0.2), x_limit = c(-1, 1))
+#' 
+#' k = 50
+#' viz_adj_MARC(d_j = k50_data$d_j, se_j = k50_data$se_j, 
+#' study_labels = c(1:50), seed = 102,
+#' x_breaks = seq(-1, 1, 0.2), x_limit = c(-1, 1))
+#' 
+#' k = 100
+#' viz_adj_MARC(d_j = k100_data$d_j, se_j = k100_data$se_j, 
+#' study_labels = c(1:100), seed = 102,
+#' x_breaks = seq(-1, 1, 0.2), x_limit = c(-1, 1))
+#' 
 #' data(viz_MA_data)
 #' head(viz_MA_data)
 #'
