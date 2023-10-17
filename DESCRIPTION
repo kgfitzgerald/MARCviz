@@ -12,7 +12,7 @@ Description: This package produces a Meta-Analytic Rain Cloud (MARC) Plot.
     This plot utilizes the y axis for weight and the x axis for standardized mean difference (SMD).
 License: What license is it under?
 URL: https://github.com/kgfitzgerald/MARCviz
-BugReports:https://github.com/kgfitzgerald/MARCviz/issues
+BugReports: https://github.com/kgfitzgerald/MARCviz/issues
 Depends: 
     R (>= 4.3.1)
 Imports:
@@ -22,8 +22,10 @@ Imports:
     tibble (>= 3.2.1),
     plotly (>= 4.10.1)
 Suggests:
+    testthat (>= 3.0.0)
 VignetteBuilder:
 Encoding: UTF-8
 Language: en-US
 LazyData: true
 RoxygenNote: 7.2.3
+Config/testthat/edition: 3
