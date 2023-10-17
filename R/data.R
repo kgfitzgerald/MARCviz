@@ -1,15 +1,26 @@
-#' World Health Organization TB data
+#' Meta-analytic data to visualize using viz_MARC()
 #'
-#' A subset of data from the World Health Organization Global Tuberculosis
-#' Report ...
+#' Includes data for 4 meta-analyses of size k = 10, 20, 50, 100.
+#' Should filter/subset by the first column (k) to extract data for one meta-analysis
 #'
-#' @format ## `viz_MA_data`
-#' A data frame with 7,240 rows and 60 columns:
+#' @docType data
+#'
+#' @usage data(viz_MA_data)
+#'
+#' @format An object of class \code{"data.frame"} with 180 rows and 5 columns
 #' \describe{
-#'   \item{country}{Country name}
-#'   \item{iso2, iso3}{2 & 3 letter ISO country codes}
-#'   \item{year}{Year}
-#'   ...
+#'  \item{ccode}{ISO3 country code (as character) for the countries in the
+#'      sample (Angola, Benin, France, Rwanda, and UK)}
+#'  \item{year}{A value between 1990 and 1999}
+#'  \item{month}{An abbreviation (MMM) for month (character)}
+#'  \item{gpd}{A fake value for GDP (randomly generated)}
+#'  \item{population}{A fake value for population (randomly generated)}
 #' }
-#' @source <https://www.who.int/teams/global-tuberculosis-programme/data>
+#' @references This data set was generated for the statistical cognition experiment in Fitzgerald, Khella, Charles, & Tipton (2024).
+#' @keywords datasets
+#' @examples
+#'
+#' data(viz_MA_data)
+#' head(viz_MA_data)
+#'
 "viz_MA_data"
