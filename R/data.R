@@ -9,12 +9,26 @@
 #'
 #' @format An object of class \code{"data.frame"} with 180 rows and 5 columns
 #' \describe{
-#'  \item{ccode}{ISO3 country code (as character) for the countries in the
-#'      sample (Angola, Benin, France, Rwanda, and UK)}
-#'  \item{year}{A value between 1990 and 1999}
-#'  \item{month}{An abbreviation (MMM) for month (character)}
-#'  \item{gpd}{A fake value for GDP (randomly generated)}
-#'  \item{population}{A fake value for population (randomly generated)}
+#'  \item{k}{Number of studies per meta-analytic dataset}
+#'  \item{N}{Total # of students per study}
+#'  \item{M}{# of clusters (schools) per study}
+#'  \item{N_t}{Total # of treatment students per study}
+#'  \item{N_c}{Total # of control students per study}
+#'  \item{n}{# of students per cluster (school) (n = N/M)}
+#'  \item{rho}{Intra-Class Correlation (ICC)}
+#'  \item{j}{Study # j = 1, ..., k_}
+#'  \item{delta}{True treatment effect}
+#'  \item{N_j}{total # of students in study j}
+#'  \item{M_j}{# of clusters in study j}
+#'  \item{n_j}{# of students per school in study j}
+#'  \item{N_t_j}{Total # of treatment students in study j}
+#'  \item{N_c_j}{Total # of control students in study j}
+#'  \item{rho}{ICC}
+#'  \item{SE}{Standard error used to generate initial d_j estimates}
+#'  \item{d_j}{Treatment effect estimate in study j}
+#'  \item{se_j}{Standard error for study j (before rescaling)}
+#'  \item{w_j}{Meta-analytic weight for study j (before rescaling)}
+#'  \item{w_j_perc}{Percent weight allocated to study j}
 #' }
 #' @references This data set was generated for the statistical cognition experiment in Fitzgerald, Khella, Charles, & Tipton (2024).
 #' @keywords datasets
