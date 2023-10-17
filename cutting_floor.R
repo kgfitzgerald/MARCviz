@@ -31,3 +31,16 @@
 #' @examples "Finally gives you some room to showcase your data"
 "viz_MA_data"
 
+# add row for summary data to MA_data
+# set w_j_perc = 1 for summary since V(summary) = 1/sum(weights)
+MA_data <- MA_data %>%
+  add_row(w_j_perc = 1,
+          d_j = summary_es,
+          w_j = sum(MA_data$w_j))
+
+if(is.null(study_labels)){
+  #NOTE TO SELF: another place to make flexible in package for when # of es > k
+  study_labels <- c(seq(1:k), "SUMMARY")
+} else{
+  study_labels <- c(study_labels, "SUMMARY")
+}
