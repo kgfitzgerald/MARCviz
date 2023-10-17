@@ -9,13 +9,6 @@
 #'
 #' @format An object of class \code{"data.frame"} with 180 rows and 5 columns
 #' \describe{
-#'  \item{k}{Number of studies per meta-analytic dataset}
-#'  \item{N}{Total # of students per study}
-#'  \item{M}{# of clusters (schools) per study}
-#'  \item{N_t}{Total # of treatment students per study}
-#'  \item{N_c}{Total # of control students per study}
-#'  \item{n}{# of students per cluster (school) (n = N/M)}
-#'  \item{rho}{Intra-Class Correlation (ICC)}
 #'  \item{j}{Study # j = 1, ..., k_}
 #'  \item{delta}{True treatment effect}
 #'  \item{N_j}{total # of students in study j}
