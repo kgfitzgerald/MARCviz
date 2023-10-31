@@ -44,7 +44,7 @@ viz_MARC(
 
 \item{legend_data}{3x3 data.frame of vectors y, x, w_j_perc that give y-coordinates, x-coordinates, and weights to be plotted manually in the legend. Default is legend_data <- data.frame(y = c(ymax*.55, ymax*.45, ymax*.35), x = xmin*0.65, w_j_perc = c(.1, .01, .001))}
 
-\item{sizeref}{controls plotly argument that scales dots. (default set by sizeref <- 2.0 * max(MA_data$w_j_perc) / (max_marker_size**2) as recommended by https://plotly.com/r/bubble-charts/)}
+\item{sizeref}{controls plotly argument that scales dots. (default set by sizeref <- 2.0 / (max_marker_size**2) as recommended by https://plotly.com/r/bubble-charts/)}
 
 \item{width}{controls figure width, passed to plot_ly() argument (default = 650)}
 
