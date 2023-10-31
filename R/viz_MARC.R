@@ -12,7 +12,7 @@
 #' @param noise_height controls how much the cloud of points varies vertically above/below y = 1 (default = 0.18, to stay within rectangle of height -/+0.2)
 #' @param n_dots_in_cloud number of random dots to generate for the cloud of points at top (default = 250)
 #' @param legend_data 3x3 data.frame of vectors y, x, w_j_perc that give y-coordinates, x-coordinates, and weights to be plotted manually in the legend. Default is legend_data <- data.frame(y = c(ymax*.55, ymax*.45, ymax*.35), x = xmin*0.65, w_j_perc = c(.1, .01, .001))
-#' @param sizeref controls plotly argument that scales dots. (default set by sizeref <- 2.0 * max(MA_data$w_j_perc) / (max_marker_size**2) as recommended by https://plotly.com/r/bubble-charts/)
+#' @param sizeref controls plotly argument that scales dots. (default set by sizeref <- 2.0 / (max_marker_size**2) as recommended by https://plotly.com/r/bubble-charts/)
 #' @param max_marker_size maximum marker size, used in calculating sizeref if not specified separately (default = 50)
 #' @param width controls figure width, passed to plot_ly() argument (default = 650)
 #' @param height controls figure height, passed to plot_ly() argument (default = 425)
@@ -185,6 +185,7 @@ viz_MARC <- function(d_j = NULL,
   #recommendation from https://plotly.com/r/bubble-charts/
   if(is.null(sizeref)){
     #sizeref <- 2.0 * max(MA_data$w_j_perc) / (max_marker_size**2)
+    #to size with summary effect, max w_j_perc is 1
     sizeref <- 2.0 / (max_marker_size**2)
   } else{
     sizeref <- sizeref
