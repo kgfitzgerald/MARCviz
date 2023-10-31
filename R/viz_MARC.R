@@ -166,7 +166,7 @@ viz_MARC <- function(d_j = NULL,
   if(is.null(legend_data)){
     #find largest weight to place on legend based on ymax
     max_w_j_legend <- data.frame(w_j_perc = c(0.1, 0.01, 0.001, 0.0001)) %>%
-      mutate(keep = ymax > w_j_perc) %>%
+      mutate(keep = ymax >= w_j_perc) %>%
       filter(keep == TRUE) %>%
       slice(1) %>%
       pull(w_j_perc)
@@ -184,25 +184,30 @@ viz_MARC <- function(d_j = NULL,
 
   #recommendation from https://plotly.com/r/bubble-charts/
   if(is.null(sizeref)){
-    sizeref <- 2.0 * max(MA_data$w_j_perc) / (max_marker_size**2)
+    #sizeref <- 2.0 * max(MA_data$w_j_perc) / (max_marker_size**2)
+    sizeref <- 2.0 / (max_marker_size**2)
   } else{
     sizeref <- sizeref
   }
 
+  ## TOP PANE OF VISUALIZATION (w/ Summary evidence + annotations)
   viz_top <- plot_ly(type = "scatter", mode = "markers", fill = "",
                      width = width, height = height)  %>%
     #create annotations for top panel of summary evidence
+    # Summary of evidence annotation
     add_annotations(text = "SUMMARY OF THE EVIDENCE:",
                     x = xmin*.95 + abs(min(cloud_sample$d) - xmin)/2, y = 1,
                     showarrow = FALSE, xanchor = "center",
                     font = list(size = font_sizes[1]),
                     layer = 'above') %>%
+    # Average SMD annotation
     add_annotations(text = paste("Average SMD: ", round(summary_es, digits),
                                  "\nWeight: 1.0"),
                     x = max(cloud_sample$d) + 0.05, y = 1,
                     showarrow = FALSE, xanchor = "left", align = "left",
                     font = list(size = font_sizes[2]),
                     layer = 'above') %>%
+    # Interpretation of CI annotation
     add_annotations(text = paste("One out of 10,000+ possible values for the true SMD, \nbased on the existing evidence.\n95% of values fall between ",
                                  round(CIlb,  digits), " and ", round(CIub, digits),
                                  "\nwith an average value of ",  round(summary_es, digits), ".", sep = ""),
@@ -211,12 +216,14 @@ viz_MARC <- function(d_j = NULL,
                     showarrow = FALSE, xanchor = "left", yanchor = "top",
                     font = list(size = font_sizes[3]),
                     layer = 'above', align = "left") %>%
+    # arrow from individual dot to annotation text
     add_annotations(text = "",
                     ax = min$d, ay = (1 + min$noise),
                     x = summary_es, y = 0.75,
                     xref = 'x', yref = 'y', axref = 'x', ayref = 'y',
                     showarrow = TRUE, arrowhead = 3, arrowsize = 1,
                     arrowwidth = 1, arrowcolor = 'lightblue') %>%
+    # summary dot
     add_trace(type = "scatter", x = summary_es, y = 1,
               marker = list(sizeref = .1, sizemode = 'area', size = max_marker_size,
                             color = 'navy',
@@ -225,7 +232,7 @@ viz_MARC <- function(d_j = NULL,
               hovertemplate = paste('<b>SMD</b>: %{x}<br>',
                                     '<b>Weight </b>: %{y}</b>',
                                     '<extra></extra>')) %>%
-    #trace 2
+    # add cloud of points
     add_trace(type = "scatter",
               mode = "markers", data = cloud_sample, x = ~d,
               y = (1 + cloud_sample$noise),
@@ -234,6 +241,7 @@ viz_MARC <- function(d_j = NULL,
                             line = list(color = "lightblue", width = 0.5),
                             size = 2.5),
               showlegend = FALSE) %>%
+    # red rectangle for negative SMD, white for outline of Summary of evidence
     layout(plot_bgcolor = "#e5ecf6",
            shapes = list(list(type = "rect",
                               fillcolor = "red",
@@ -264,10 +272,11 @@ viz_MARC <- function(d_j = NULL,
                         showgrid = FALSE,
                         showticklabels = FALSE,
                         zeroline = F))
-  #viz_top
 
+  ## BOTTOM PANE OF VISUALIZATION (with study data)
   viz_bottom <- plot_ly(type = "scatter", mode = "markers", fill = "",
                         width = 650, height = 425) %>%
+    # Increase / Decrease annotations
     add_annotations(text = "Decreased Scores (SMD < 0)",
                     x = xmin*0.5, y = -ymax*.05,
                     showarrow = FALSE, xanchor = "center",
@@ -279,6 +288,8 @@ viz_MARC <- function(d_j = NULL,
                     showarrow = FALSE, xanchor = "center",
                     font = list(size = font_sizes[4]),
                     layer = 'above') %>%
+
+    # More / Less certain annotations
     add_annotations(text = "More certain",
                     x = xmin*.85, y = ymax*.65,
                     yref = "y2",
@@ -292,6 +303,7 @@ viz_MARC <- function(d_j = NULL,
                     showarrow = FALSE, xanchor = "center",
                     font = list(size = font_sizes[5]),
                     layer = 'above') %>%
+    # arrows between More / Less Certain annotations
     add_annotations(text = "",
                     x = xmin*0.85, y = ymax*0.37,
                     ax = xmin*0.85, ay = ymax/2,
@@ -306,6 +318,7 @@ viz_MARC <- function(d_j = NULL,
                     yref = 'y2', ayref = 'y2',
                     showarrow = TRUE, arrowhead = 3, arrowsize = 1,
                     arrowwidth = 1, arrowcolor = 'black') %>%
+    # study data
     add_trace(data = MA_data,
               x = ~d_j, y = ~w_j_perc, text = ~ID, size = ~w_j_perc,
               marker = list(size = ~w_j_perc,
@@ -318,6 +331,7 @@ viz_MARC <- function(d_j = NULL,
                                     '<extra></extra>'),
               showlegend = FALSE#,
     ) %>%
+    # legend data - dots
     add_trace(data = legend_data,
               x = ~x, y = ~y, size = ~w_j_perc,
               marker = list(size = ~w_j_perc,
@@ -327,6 +341,7 @@ viz_MARC <- function(d_j = NULL,
               showlegend = FALSE,
               hoverinfo = "none"
     ) %>%
+    # legend data - text
     add_annotations(data = legend_data, text = ~w_j_perc,
                     x = ~x + .05, y = ~y,
                     showarrow = FALSE, xanchor = "left",
@@ -337,8 +352,10 @@ viz_MARC <- function(d_j = NULL,
                     font = list(size = font_sizes[7]), yref = "y2", xref = "x2",
                     showarrow = FALSE, xanchor = "center",
                     layer = "above") %>%
+    # red / white rectangles
     layout(plot_bgcolor = "#e5ecf6",
            shapes = list(
+             # red for negative SMD region
              list(type = "rect",
                   fillcolor = "red",
                   line = list(color = "red"),
@@ -346,6 +363,7 @@ viz_MARC <- function(d_j = NULL,
                   y0 = -ymax*.1, y1 = ymax, #y1 = 1.15,
                   x0 = xmin, x1 = 0,
                   layer = 'below'),
+             # small white rectangles for Increase / Decrease annotations
              list(type = "rect",
                   fillcolor = "white",
                   line = list(color = "black", width = 0.5),
@@ -368,6 +386,7 @@ viz_MARC <- function(d_j = NULL,
                   x0 = xmin*0.95, x1 = xmin*0.5,
                   layer = 'below')
            ),
+           # xaxis specifications
            xaxis = list(title = "Standardized Mean Difference (SMD)",
                         range = c(xmin, xmax),
                         dtick = 0.2,
@@ -379,6 +398,7 @@ viz_MARC <- function(d_j = NULL,
                         gridwidth = .10,
                         hoverformat = '.3f'
            ),
+           # yaxis specifications
            yaxis = list(title = "Weight",
                         range = c(-ymax*.1, ymax),
                         dtick = if_else(ceiling(ymax/5*100) %% 2 == 0,
@@ -391,6 +411,7 @@ viz_MARC <- function(d_j = NULL,
                         showgrid = FALSE,
                         hoverformat = '.4f'))
 
+  #combine top and bottom panes
   plotly_viz <- subplot(viz_top, viz_bottom, nrows = 2,
                         titleX = TRUE, titleY = TRUE, shareX = FALSE,
                         heights = c(0.4,0.6),
