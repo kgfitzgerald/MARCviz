@@ -43,6 +43,8 @@
 #' @importFrom plotly "layout"
 #' @importFrom plotly "subplot"
 #' @importFrom plotly "config"
+#' @importFrom dplyr "pull"
+#' @importFrom dplyr "slice"
 
 viz_MARC <- function(d_j = NULL,
                      se_j = NULL,

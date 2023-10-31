@@ -22,25 +22,25 @@
 #' k10_data <- viz_MA_data %>% filter(k == 10)
 #' viz_MARC(d_j = k10_data$d_j, se_j = k10_data$se_j,
 #' study_labels = c(1:10), seed = 102,
-#' x_breaks = seq(-1, 1, 0.2), x_limit = c(-1, 1))
+#' x_limit = c(-1, 1))
 #'
 #' # for k = 20
 #' k20_data <- viz_MA_data %>% filter(k == 20)
 #' viz_MARC(d_j = k20_data$d_j, se_j = k20_data$se_j,
 #' study_labels = c(1:20), seed = 102,
-#' x_breaks = seq(-1, 1, 0.2), x_limit = c(-1, 1))
+#' x_limit = c(-1, 1))
 #'
 #' # for k = 50
 #' k50_data <- viz_MA_data %>% filter(k == 50)
 #' viz_MARC(d_j = k50_data$d_j, se_j = k50_data$se_j,
 #' study_labels = c(1:50), seed = 102,
-#' x_breaks = seq(-1, 1, 0.2), x_limit = c(-1, 1))
+#' x_limit = c(-1, 1))
 #'
 #' # for k = 100
 #' k100_data <- viz_MA_data %>% filter(k == 100)
 #' viz_MARC(d_j = k100_data$d_j, se_j = k100_data$se_j,
 #' study_labels = c(1:100), seed = 102,
-#' x_breaks = seq(-1, 1, 0.2), x_limit = c(-1, 1))
+#' x_limit = c(-1, 1))
 #'
 #' data(viz_MA_data)
 #' head(viz_MA_data)
