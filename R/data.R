@@ -18,6 +18,9 @@
 #' @references This data set was generated for the statistical cognition experiment in Fitzgerald, Khella, Charles, & Tipton (2024).
 #' @keywords datasets
 #' @examples
+#'
+#' library(tidyverse)
+#'
 #' # for k = 10
 #' k10_data <- viz_MA_data %>% filter(k == 10)
 #' viz_MARC(d_j = k10_data$d_j, se_j = k10_data$se_j,

@@ -22,6 +22,9 @@ Includes data for 4 meta-analyses of size k = 10, 20, 50, 100.
 Should filter/subset by the first column (k) to extract data for one meta-analysis
 }
 \examples{
+
+library(tidyverse)
+
 # for k = 10
 k10_data <- viz_MA_data \%>\% filter(k == 10)
 viz_MARC(d_j = k10_data$d_j, se_j = k10_data$se_j,
