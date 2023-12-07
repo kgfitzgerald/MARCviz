@@ -70,6 +70,7 @@ viz_MARC <- function(d_j = NULL,
   #NOTE TO SELF: For future CRAN package, will need to update this to be flexible for
   #studies w/ multiple effect sizes
   k <- dim(MA_data)[1]
+  stopifnot(k > 1)
 
   #randomly sort rows
   #useful in experimental setting so studies
@@ -205,7 +206,8 @@ viz_MARC <- function(d_j = NULL,
                     layer = 'above') %>%
     # Average SMD annotation
     add_annotations(text = paste("Average SMD: ", round(summary_es, digits),
-                                 "\nWeight: 1.0"),
+                                 "\nWeight: 1.0",
+                                 "\n# of Studies: ", k),
                     x = max(cloud_sample$d) + 0.05, y = 1,
                     showarrow = FALSE, xanchor = "left", align = "left",
                     font = list(size = font_sizes[2]),
