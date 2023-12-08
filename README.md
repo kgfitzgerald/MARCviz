@@ -1,4 +1,4 @@
-
+{% include_relative README.html}
 # MARCviz package
 
 The `MARCviz` package contains the function `viz_MARC` for creating the
