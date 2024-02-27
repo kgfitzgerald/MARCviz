@@ -20,7 +20,7 @@
 #' @param font_sizes vector of 7 font sizes for annotations, in order: SUMMARY OF EVIDENCE, Average SMD & Weight, CI annotation, Increased/Decreased Scores, More/Less certain, Legend number labels, Legend Weight title (default = c(14, 10, 8, 9, 8, 7, 10))
 #' @param digits number of digits to round summary effect size and confidence interval bounds to (default = 2)
 #'
-#' @return a plotly object
+#' @return a plotly object (if type = "interactive") or ggplot object (if type = "static")
 #' @examples
 #' data(viz_MA_data)
 #' d_j <- viz_MA_data %>% filter(k == 100) %>% pull(d_j)

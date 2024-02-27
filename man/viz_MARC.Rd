@@ -60,7 +60,7 @@ viz_MARC(
 \item{max_marker_size}{maximum marker size, used in calculating sizeref if not specified separately (default = 50)}
 }
 \value{
-a plotly object
+a plotly object (if type = "interactive") or ggplot object (if type = "static")
 }
 \description{
 Produces an interactive Meta-Analytic Rain Cloud (MARC) plot
