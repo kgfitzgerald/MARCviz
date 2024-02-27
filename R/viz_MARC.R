@@ -530,7 +530,7 @@ viz_MARC <- function(d_j = NULL,
       xlim(xmin, xmax) +
       ylim(.6, 1.2)
 
-    p <- plot_grid(top, bottom, ncol = 1, align = "v",
+    p <- cowplot::plot_grid(top, bottom, ncol = 1, align = "v",
                    axis = "lr",
                    rel_heights = c(0.4,0.6))
 
