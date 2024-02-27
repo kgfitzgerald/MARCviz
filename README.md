@@ -20,9 +20,9 @@ library(MARCviz)
 ?viz_MARC
 ```
 
-Produce an interactive MARC plot:
+Produce MARC plot:
 
-``` r
+```{r, warning = FALSE, message = FALSE, eval = FALSE}
 library(tidyverse)
 #read in meta-analytic dataset
 data(viz_MA_data)
@@ -32,7 +32,11 @@ d_j <- viz_MA_data %>% filter(k == 100) %>% pull(d_j)
 #specify vector of standard errors
 se_j <- viz_MA_data %>% filter(k == 100) %>% pull(se_j)
 
+#create MARC plot (default is interactive plotly object)
 viz_MARC(d_j, se_j)
+
+#create static MARC plot (ggplot object)
+viz_MARC(d_j, se_j, type = "static")
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
