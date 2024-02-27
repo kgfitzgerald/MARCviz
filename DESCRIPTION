@@ -20,7 +20,7 @@ Imports:
     metafor (>= 4.2.0),
     stats (>= 4.3.1),
     tibble (>= 3.2.1),
-    plotly (>= 4.10.1)
+    plotly (>= 4.10.1),
     ggplot2 (>= 3.5.0)
 Suggests:
     testthat (>= 3.0.0)
