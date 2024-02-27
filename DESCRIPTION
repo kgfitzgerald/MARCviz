@@ -1,6 +1,6 @@
 Type: Package
 Package: MARCviz
-Title: Produces Interactive Meta-Analytic Rain Cloud (MARC) Plot
+Title: Produces Meta-Analytic Rain Cloud (MARC) Plot
 Version: 0.1.0
 Authors@R: c(
     person("Kaitlyn", "Fitzgerald", email = "kfitzgerald@apu.edu", role = c("cre","aut")),
@@ -21,6 +21,7 @@ Imports:
     stats (>= 4.3.1),
     tibble (>= 3.2.1),
     plotly (>= 4.10.1)
+    ggplot (>= 3.5.0)
 Suggests:
     testthat (>= 3.0.0)
 VignetteBuilder:

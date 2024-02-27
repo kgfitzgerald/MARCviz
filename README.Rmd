@@ -49,3 +49,4 @@ se_j <- viz_MA_data %>% filter(k == 100) %>% pull(se_j)
 viz_MARC(d_j, se_j)
 ```
 
+

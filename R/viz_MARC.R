@@ -4,6 +4,7 @@
 #'
 #' @param d_j vector of effect size estimates
 #' @param se_j vector of standard errors of effect size estimates
+#' @param type type of graph, "interactive" (built by plotly) or "static" (built by ggplot)
 #' @param confidence_level confidence level for interval written in plot annotation (default = 0.95)
 #' @param study_labels vector of study labels (optional)
 #' @param seed integer used to set random seed before randomizing rows (optional)
@@ -45,9 +46,26 @@
 #' @importFrom plotly "config"
 #' @importFrom dplyr "pull"
 #' @importFrom dplyr "slice"
+#' @importFrom cowplot "plot_grid"
+#' @importFrom ggplot2 "ggplot"
+#' @importFrom ggplot2 "theme_light"
+#' @importFrom ggplot2 "theme"
+#' @importFrom ggplot2 "theme_void"
+#' @importFrom ggplot2 "geom_vline"
+#' @importFrom ggplot2 "geom_hline"
+#' @importFrom ggplot2 "geom_point"
+#' @importFrom ggplot2 "scale_size_area"
+#' @importFrom ggplot2 "scale_y_continuous"
+#' @importFrom ggplot2 "scale_x_continuous"
+#' @importFrom ggplot2 "scale_fill_gradient"
+#' @importFrom ggplot2 "geom_curve"
+#' @importFrom ggplot2 "guides"
+#' @importFrom ggplot2 "xlim"
+#' @importFrom ggplot2 "ylim"
 
 viz_MARC <- function(d_j = NULL,
                      se_j = NULL,
+                     type = "interactive",
                      confidence_level = 0.95,
                      study_labels = NULL,
                      seed = NULL,
@@ -165,263 +183,357 @@ viz_MARC <- function(d_j = NULL,
     ymax <- y_limits[2]
   }
 
-  #create coordinates for legend (added as manual annotations)
-  if(is.null(legend_data)){
-    #find largest weight to place on legend based on ymax
-    max_w_j_legend <- data.frame(w_j_perc = c(0.1, 0.01, 0.001, 0.0001)) %>%
-      mutate(keep = ymax >= w_j_perc) %>%
-      filter(keep == TRUE) %>%
-      slice(1) %>%
-      pull(w_j_perc)
-    #create coordinates and dot size for 3 dots in legend
-    #y-coordinates placed at 55%, 45%, and 35% of ymax value
-    #x-coordinates plaed at 65% of xmin value
-    legend_data <- data.frame(y = c(ymax*.55, ymax*.45, ymax*.35),
-                              x = xmin*0.65,
-                              w_j_perc = c(max_w_j_legend,
-                                           max_w_j_legend/10,
-                                           max_w_j_legend/100))
-  } else{
-    legend_data <- legend_data
+  ################# INTERACTIVE (PLOTLY) VERSION ###################
+  if(type == "interactive"){
+    #create coordinates for legend (added as manual annotations)
+    if(is.null(legend_data)){
+      #find largest weight to place on legend based on ymax
+      max_w_j_legend <- data.frame(w_j_perc = c(0.1, 0.01, 0.001, 0.0001)) %>%
+        mutate(keep = ymax >= w_j_perc) %>%
+        filter(keep == TRUE) %>%
+        slice(1) %>%
+        pull(w_j_perc)
+      #create coordinates and dot size for 3 dots in legend
+      #y-coordinates placed at 55%, 45%, and 35% of ymax value
+      #x-coordinates plaed at 65% of xmin value
+      legend_data <- data.frame(y = c(ymax*.55, ymax*.45, ymax*.35),
+                                x = xmin*0.65,
+                                w_j_perc = c(max_w_j_legend,
+                                             max_w_j_legend/10,
+                                             max_w_j_legend/100))
+    } else{
+      legend_data <- legend_data
+    }
+
+    #recommendation from https://plotly.com/r/bubble-charts/
+    if(is.null(sizeref)){
+      #sizeref <- 2.0 * max(MA_data$w_j_perc) / (max_marker_size**2)
+      #to size with summary effect, max w_j_perc is 1
+      sizeref <- 2.0 / (max_marker_size**2)
+    } else{
+      sizeref <- sizeref
+    }
+
+    ## TOP PANE OF VISUALIZATION (w/ Summary evidence + annotations)
+    viz_top <- plot_ly(type = "scatter", mode = "markers", fill = "",
+                       width = width, height = height)  %>%
+      #create annotations for top panel of summary evidence
+      # Summary of evidence annotation
+      add_annotations(text = "SUMMARY OF THE EVIDENCE:",
+                      x = xmin*.95 + abs(min(cloud_sample$d) - xmin)/2, y = 1,
+                      showarrow = FALSE, xanchor = "center",
+                      font = list(size = font_sizes[1]),
+                      layer = 'above') %>%
+      # Average SMD annotation
+      add_annotations(text = paste("Average SMD: ", round(summary_es, digits),
+                                   "\nWeight: 1.0",
+                                   "\n# of Studies: ", k),
+                      x = max(cloud_sample$d) + 0.05, y = 1,
+                      showarrow = FALSE, xanchor = "left", align = "left",
+                      font = list(size = font_sizes[2]),
+                      layer = 'above') %>%
+      # Interpretation of CI annotation
+      add_annotations(text = paste("One out of 10,000+ possible values for the true SMD, \nbased on the existing evidence.\n95% of values fall between ",
+                                   round(CIlb,  digits), " and ", round(CIub, digits),
+                                   "\nwith an average value of ",  round(summary_es, digits), ".", sep = ""),
+                      #x = .45, y = 0.85,
+                      x = summary_es, y = 0.75,
+                      showarrow = FALSE, xanchor = "left", yanchor = "top",
+                      font = list(size = font_sizes[3]),
+                      layer = 'above', align = "left") %>%
+      # arrow from individual dot to annotation text
+      add_annotations(text = "",
+                      ax = min$d, ay = (1 + min$noise),
+                      x = summary_es, y = 0.75,
+                      xref = 'x', yref = 'y', axref = 'x', ayref = 'y',
+                      showarrow = TRUE, arrowhead = 3, arrowsize = 1,
+                      arrowwidth = 1, arrowcolor = 'lightblue') %>%
+      # summary dot
+      add_trace(type = "scatter", x = summary_es, y = 1,
+                marker = list(sizeref = .1, sizemode = 'area', size = max_marker_size,
+                              color = 'navy',
+                              line = list(color = "navy")),
+                showlegend = FALSE,
+                hovertemplate = paste('<b>SMD</b>: %{x}<br>',
+                                      '<b>Weight </b>: %{y}</b>',
+                                      '<extra></extra>')) %>%
+      # add cloud of points
+      add_trace(type = "scatter",
+                mode = "markers", data = cloud_sample, x = ~d,
+                y = (1 + cloud_sample$noise),
+                hoverinfo = "none",
+                marker = list(sizemode = "area", color = 'white',
+                              line = list(color = "lightblue", width = 0.5),
+                              size = 2.5),
+                showlegend = FALSE) %>%
+      # red rectangle for negative SMD, white for outline of Summary of evidence
+      layout(plot_bgcolor = "#e5ecf6",
+             shapes = list(list(type = "rect",
+                                fillcolor = "red",
+                                line = list(color = "red"),
+                                opacity = 0.2,
+                                y0 = 0.4, y1 = 1.3, #y1 = 1.15,
+                                x0 = xmin, x1 = 0,
+                                layer = 'below'),
+                           list(type = "rect",
+                                fillcolor = "white",
+                                line = list(color = "white"),
+                                opacity = 1,
+                                y0 = .8, y1 = 1.2,
+                                x0 = xmin*.9, x1 = xmax*.9,
+                                layer = 'below')),
+             xaxis = list(title = "",
+                          range = c(xmin, xmax),
+                          dtick = 0.2,
+                          tick0 = -1,
+                          tickmode = "linear",
+                          showgrid = FALSE,
+                          showticklabels = FALSE,
+                          zeroline = F),
+             yaxis = list(title = "", #range = c(0.85,1.15),
+                          dtick = 0.1,
+                          tick0 = 1,
+                          tickmode = "linear",
+                          showgrid = FALSE,
+                          showticklabels = FALSE,
+                          zeroline = F))
+
+    ## BOTTOM PANE OF VISUALIZATION (with study data)
+    viz_bottom <- plot_ly(type = "scatter", mode = "markers", fill = "",
+                          width = 650, height = 425) %>%
+      # Increase / Decrease annotations
+      add_annotations(text = "Decreased Scores (SMD < 0)",
+                      x = xmin*0.5, y = -ymax*.05,
+                      showarrow = FALSE, xanchor = "center",
+                      font = list(size = font_sizes[4]),
+                      layer = 'above') %>%
+      add_annotations(text = "Increased Scores (SMD > 0)",
+                      #x = 0.65, y = 0.1,
+                      x = xmax*0.5, y = -ymax*.05,
+                      showarrow = FALSE, xanchor = "center",
+                      font = list(size = font_sizes[4]),
+                      layer = 'above') %>%
+
+      # More / Less certain annotations
+      add_annotations(text = "More certain",
+                      x = xmin*.85, y = ymax*.65,
+                      yref = "y2",
+                      showarrow = FALSE, xanchor = "center",
+                      font = list(size = font_sizes[5]),
+                      layer = 'below') %>%
+      add_annotations(text = "Less certain",
+                      #x = -0.5, y = 0.4,
+                      x = xmin*0.85, y = ymax*.35,
+                      yref = "y2",
+                      showarrow = FALSE, xanchor = "center",
+                      font = list(size = font_sizes[5]),
+                      layer = 'above') %>%
+      # arrows between More / Less Certain annotations
+      add_annotations(text = "",
+                      x = xmin*0.85, y = ymax*0.37,
+                      ax = xmin*0.85, ay = ymax/2,
+                      xref = 'x2', axref = 'x2',
+                      yref = 'y2', ayref = 'y2',
+                      showarrow = TRUE, arrowhead = 3, arrowsize = 1,
+                      arrowwidth = 1, arrowcolor = 'black') %>%
+      add_annotations(text = "",
+                      x = xmin*0.85, y = ymax*.63,
+                      ax = xmin*0.85, ay = ymax/2,
+                      xref = 'x2', axref = 'x2',
+                      yref = 'y2', ayref = 'y2',
+                      showarrow = TRUE, arrowhead = 3, arrowsize = 1,
+                      arrowwidth = 1, arrowcolor = 'black') %>%
+      # study data
+      add_trace(data = MA_data,
+                x = ~d_j, y = ~w_j_perc, text = ~ID, size = ~w_j_perc,
+                marker = list(size = ~w_j_perc,
+                              sizemode = "area", color = 'navy',
+                              line = list(color = "navy"),
+                              sizeref = sizeref),
+                hovertemplate = paste('<i>Study ID</i>: %{text}',
+                                      '<br><b>SMD</b>: %{x}<br>',
+                                      '<b>Weight </b>: %{y}</b>',
+                                      '<extra></extra>'),
+                showlegend = FALSE#,
+      ) %>%
+      # legend data - dots
+      add_trace(data = legend_data,
+                x = ~x, y = ~y, size = ~w_j_perc,
+                marker = list(size = ~w_j_perc,
+                              sizemode = "area", color = 'navy',
+                              line = list(color = "navy"),
+                              sizeref = sizeref),
+                showlegend = FALSE,
+                hoverinfo = "none"
+      ) %>%
+      # legend data - text
+      add_annotations(data = legend_data, text = ~w_j_perc,
+                      x = ~x + .05, y = ~y,
+                      showarrow = FALSE, xanchor = "left",
+                      yref = "y2", xref = "x2",
+                      font = list(size = font_sizes[6]),
+                      layer = 'above') %>%
+      add_annotations(text = "Weight", y = ymax*0.65, x = xmin*0.65,
+                      font = list(size = font_sizes[7]), yref = "y2", xref = "x2",
+                      showarrow = FALSE, xanchor = "center",
+                      layer = "above") %>%
+      # red / white rectangles
+      layout(plot_bgcolor = "#e5ecf6",
+             shapes = list(
+               # red for negative SMD region
+               list(type = "rect",
+                    fillcolor = "red",
+                    line = list(color = "red"),
+                    opacity = 0.2,
+                    y0 = -ymax*.1, y1 = ymax, #y1 = 1.15,
+                    x0 = xmin, x1 = 0,
+                    layer = 'below'),
+               # small white rectangles for Increase / Decrease annotations
+               list(type = "rect",
+                    fillcolor = "white",
+                    line = list(color = "black", width = 0.5),
+                    opacity = 1,
+                    y0 = -ymax*0.08, y1 = -ymax*0.02,
+                    x0 = xmin*.75, x1 = xmin*.25,
+                    layer = 'below'),
+               list(type = "rect",
+                    fillcolor = "white",
+                    line = list(color = "black", width = .5),
+                    opacity = 1,
+                    y0 = -ymax*0.08, y1 = -ymax*0.02,
+                    x0 = xmax*0.25, x1 = xmax*0.75,
+                    layer = 'below'),
+               list(type = "rect",
+                    fillcolor = "white",
+                    line = list(color = "black", width = 0.5),
+                    opacity = 0.5,
+                    y0 = ymax*0.3, y1 = ymax*.7,
+                    x0 = xmin*0.95, x1 = xmin*0.5,
+                    layer = 'below')
+             ),
+             # xaxis specifications
+             xaxis = list(title = "Standardized Mean Difference (SMD)",
+                          range = c(xmin, xmax),
+                          dtick = 0.2,
+                          tick0 = -1,
+                          tickmode = "linear",
+                          title = "Standardized Mean Difference (SMD)",
+                          showgrid = FALSE,
+                          gridcolor = '#ececec',
+                          gridwidth = .10,
+                          hoverformat = '.3f'
+             ),
+             # yaxis specifications
+             yaxis = list(title = "Weight",
+                          range = c(-ymax*.1, ymax),
+                          dtick = if_else(ceiling(ymax/5*100) %% 2 == 0,
+                                          ceiling(ymax/5*100)/100,
+                                          (ceiling(ymax/5*100) + 1)/100),
+                          tick0 = 0,
+                          tickmode = "linear",
+                          gridcolor = '#ececec',
+                          gridwidth = .10,
+                          showgrid = FALSE,
+                          hoverformat = '.4f'))
+
+    #combine top and bottom panes
+    plotly_viz <- subplot(viz_top, viz_bottom, nrows = 2,
+                          titleX = TRUE, titleY = TRUE, shareX = FALSE,
+                          heights = c(0.4,0.6),
+                          which_layout = 2)
+    p <- plotly_viz %>% config(displayModeBar = FALSE)
   }
 
-  #recommendation from https://plotly.com/r/bubble-charts/
-  if(is.null(sizeref)){
-    #sizeref <- 2.0 * max(MA_data$w_j_perc) / (max_marker_size**2)
-    #to size with summary effect, max w_j_perc is 1
-    sizeref <- 2.0 / (max_marker_size**2)
-  } else{
-    sizeref <- sizeref
+  ################# INTERACTIVE (PLOTLY) VERSION ###################
+  if(type == "static"){
+    summary_data <- data.frame(d_j = summary_es,
+                               se_j = summary_se)
+    # create plot base
+    base <- ggplot(MA_data) +
+      # remove axes and superfluous grids
+      theme_light(base_line_size = .1) +
+      theme(axis.ticks.y = element_blank(),
+            axis.line = element_blank(),
+            axis.text.x = element_text(size=16),
+            axis.text.y = element_text(size = 16),
+            axis.title=element_text(size=16),
+            panel.grid.minor.y = element_blank(),
+            legend.position = c(),
+            plot.caption = element_text(size = 10, face = "italic", color = "grey", hjust = 0)) +
+      #create shading to distinguish positive and negative SMD regions
+      geom_vline(xintercept = 0, alpha = 0.3, linewidth = 2) +
+      annotate("rect", xmin = -Inf, xmax = 0, ymin = -Inf, ymax = Inf,
+               alpha = .1, fill = "red") +
+      annotate("rect", xmin = 0, xmax = Inf, ymin = -Inf, ymax = Inf,
+               alpha = .1, fill = "blue")
+      bottom <- base +
+        # create labels to aid in interpretation of x-axis (SMD)
+        annotate("label", label = "Decreased scores (SMD < 0)",
+                 x = xmin*0.5, y = -ymax*.05, size = 3) +
+        annotate("label", label = "Increased scores (SMD > 0)",
+               x = xmax*.5, y = -ymax*0.05, size = 3) +
+
+       # add annotation to aid in interpretation of y-axis (meta-analytic weight)
+        annotate("text", label = "More certain",
+                 x = xmin*.85, y = ymax*.65, alpha = 0.5, size = 3) +
+        annotate("text", label = "Less certain",
+                 x = xmin*.85, y = ymax*.35, alpha = 0.5, size = 3) +
+        annotate("segment", x = xmin*.85, xend = xmin*.85,
+                y = ymax*.6, yend = ymax*.4, alpha = 0.4,
+                arrow = arrow(length = unit(2, "mm"),
+                             type = "closed", ends = "both")) +
+        geom_point(data = MA_data, aes(x = d_j, y = w_j_perc, size = w_j_perc),
+                   color = "navyblue") +
+        geom_hline(yintercept = 0) +
+        scale_size_area(name = "Weight", max_size = 10,
+                        guide = guide_legend(reverse = TRUE)) +
+        scale_y_continuous("Weight", limits = c(-ymax*.1, ymax),
+                           breaks = seq(0,
+                                              ymax,
+                                              if_else(ceiling(ymax/5*100) %% 2 == 0,
+                                                      ceiling(ymax/5*100)/100,
+                                                      (ceiling(ymax/5*100) + 1)/100)
+                                              )
+                           ) +
+        scale_x_continuous("Standardized Mean Difference (SMD)",
+                         limits = c(xmin, xmax), breaks = round(seq(xmin, xmax, 0.2),1)) +
+        scale_fill_gradient(guide = "none", low = "navyblue",
+                          high = "white") +
+        xlab("Standardized Mean Difference (SMD)")
+    top <- base +
+      annotate("rect", xmin = xmin*.9, xmax = xmax*.9,
+               ymin = 0.8, ymax = 1.2,
+               alpha = .9, fill = "white") +
+      geom_point(data = cloud_sample,
+                 aes(x = d, y = 1 + noise),
+                 alpha = 0.2, size = 1,
+                 color = "navyblue", shape = 21) +
+      geom_point(data = summary_data, aes(x = d_j, y = 1, size = 1),
+                 color = "navyblue", alpha = 0.8) +
+      scale_size_area(name = "Weight", max_size = 10) +
+      annotate("text", x = max(cloud_sample$d) + 0.05, y = 1,
+               label = paste("Average SMD: ", round(summary_es, digits),
+                             "\nWeight: 1.0",
+                             "\n# of Studies: ", k),
+               hjust = 0, size = 3) +
+      annotate("text", x = summary_es, y = .75, size = 2.5, hjust = 0, vjust = 1,
+               label = paste0("1 of 10,000+ possible values of the true SMD, \nbased on the existing evidence.\n95% of values fall between ", round(CIlb, 2), " and ", round(CIub, 2),",\nwith an average value of ", round(summary_es, 2), ".")) +
+      annotate("text", x = xmin*.95 + abs(min(cloud_sample$d) - xmin)/2, y = 1,
+               label = paste0("SUMMARY OF THE EVIDENCE:"),
+               size = 4) +
+      geom_curve(size = .1,
+                 aes(x = min$d, y = 1 + min$noise, xend = summary_es, yend = .75),
+                 arrow = arrow(length = unit(0.01, "npc"))) +
+      theme_void() +
+      guides(size = "none") +
+      xlim(xmin, xmax) +
+      ylim(.6, 1.2)
+
+    p <- plot_grid(top, bottom, ncol = 1, align = "v",
+                   axis = "lr",
+                   rel_heights = c(0.4,0.6))
+
   }
-
-  ## TOP PANE OF VISUALIZATION (w/ Summary evidence + annotations)
-  viz_top <- plot_ly(type = "scatter", mode = "markers", fill = "",
-                     width = width, height = height)  %>%
-    #create annotations for top panel of summary evidence
-    # Summary of evidence annotation
-    add_annotations(text = "SUMMARY OF THE EVIDENCE:",
-                    x = xmin*.95 + abs(min(cloud_sample$d) - xmin)/2, y = 1,
-                    showarrow = FALSE, xanchor = "center",
-                    font = list(size = font_sizes[1]),
-                    layer = 'above') %>%
-    # Average SMD annotation
-    add_annotations(text = paste("Average SMD: ", round(summary_es, digits),
-                                 "\nWeight: 1.0",
-                                 "\n# of Studies: ", k),
-                    x = max(cloud_sample$d) + 0.05, y = 1,
-                    showarrow = FALSE, xanchor = "left", align = "left",
-                    font = list(size = font_sizes[2]),
-                    layer = 'above') %>%
-    # Interpretation of CI annotation
-    add_annotations(text = paste("One out of 10,000+ possible values for the true SMD, \nbased on the existing evidence.\n95% of values fall between ",
-                                 round(CIlb,  digits), " and ", round(CIub, digits),
-                                 "\nwith an average value of ",  round(summary_es, digits), ".", sep = ""),
-                    #x = .45, y = 0.85,
-                    x = summary_es, y = 0.75,
-                    showarrow = FALSE, xanchor = "left", yanchor = "top",
-                    font = list(size = font_sizes[3]),
-                    layer = 'above', align = "left") %>%
-    # arrow from individual dot to annotation text
-    add_annotations(text = "",
-                    ax = min$d, ay = (1 + min$noise),
-                    x = summary_es, y = 0.75,
-                    xref = 'x', yref = 'y', axref = 'x', ayref = 'y',
-                    showarrow = TRUE, arrowhead = 3, arrowsize = 1,
-                    arrowwidth = 1, arrowcolor = 'lightblue') %>%
-    # summary dot
-    add_trace(type = "scatter", x = summary_es, y = 1,
-              marker = list(sizeref = .1, sizemode = 'area', size = max_marker_size,
-                            color = 'navy',
-                            line = list(color = "navy")),
-              showlegend = FALSE,
-              hovertemplate = paste('<b>SMD</b>: %{x}<br>',
-                                    '<b>Weight </b>: %{y}</b>',
-                                    '<extra></extra>')) %>%
-    # add cloud of points
-    add_trace(type = "scatter",
-              mode = "markers", data = cloud_sample, x = ~d,
-              y = (1 + cloud_sample$noise),
-              hoverinfo = "none",
-              marker = list(sizemode = "area", color = 'white',
-                            line = list(color = "lightblue", width = 0.5),
-                            size = 2.5),
-              showlegend = FALSE) %>%
-    # red rectangle for negative SMD, white for outline of Summary of evidence
-    layout(plot_bgcolor = "#e5ecf6",
-           shapes = list(list(type = "rect",
-                              fillcolor = "red",
-                              line = list(color = "red"),
-                              opacity = 0.2,
-                              y0 = 0.4, y1 = 1.3, #y1 = 1.15,
-                              x0 = xmin, x1 = 0,
-                              layer = 'below'),
-                         list(type = "rect",
-                              fillcolor = "white",
-                              line = list(color = "white"),
-                              opacity = 1,
-                              y0 = .8, y1 = 1.2,
-                              x0 = xmin*.9, x1 = xmax*.9,
-                              layer = 'below')),
-           xaxis = list(title = "",
-                        range = c(xmin, xmax),
-                        dtick = 0.2,
-                        tick0 = -1,
-                        tickmode = "linear",
-                        showgrid = FALSE,
-                        showticklabels = FALSE,
-                        zeroline = F),
-           yaxis = list(title = "", #range = c(0.85,1.15),
-                        dtick = 0.1,
-                        tick0 = 1,
-                        tickmode = "linear",
-                        showgrid = FALSE,
-                        showticklabels = FALSE,
-                        zeroline = F))
-
-  ## BOTTOM PANE OF VISUALIZATION (with study data)
-  viz_bottom <- plot_ly(type = "scatter", mode = "markers", fill = "",
-                        width = 650, height = 425) %>%
-    # Increase / Decrease annotations
-    add_annotations(text = "Decreased Scores (SMD < 0)",
-                    x = xmin*0.5, y = -ymax*.05,
-                    showarrow = FALSE, xanchor = "center",
-                    font = list(size = font_sizes[4]),
-                    layer = 'above') %>%
-    add_annotations(text = "Increased Scores (SMD > 0)",
-                    #x = 0.65, y = 0.1,
-                    x = xmax*0.5, y = -ymax*.05,
-                    showarrow = FALSE, xanchor = "center",
-                    font = list(size = font_sizes[4]),
-                    layer = 'above') %>%
-
-    # More / Less certain annotations
-    add_annotations(text = "More certain",
-                    x = xmin*.85, y = ymax*.65,
-                    yref = "y2",
-                    showarrow = FALSE, xanchor = "center",
-                    font = list(size = font_sizes[5]),
-                    layer = 'below') %>%
-    add_annotations(text = "Less certain",
-                    #x = -0.5, y = 0.4,
-                    x = xmin*0.85, y = ymax*.35,
-                    yref = "y2",
-                    showarrow = FALSE, xanchor = "center",
-                    font = list(size = font_sizes[5]),
-                    layer = 'above') %>%
-    # arrows between More / Less Certain annotations
-    add_annotations(text = "",
-                    x = xmin*0.85, y = ymax*0.37,
-                    ax = xmin*0.85, ay = ymax/2,
-                    xref = 'x2', axref = 'x2',
-                    yref = 'y2', ayref = 'y2',
-                    showarrow = TRUE, arrowhead = 3, arrowsize = 1,
-                    arrowwidth = 1, arrowcolor = 'black') %>%
-    add_annotations(text = "",
-                    x = xmin*0.85, y = ymax*.63,
-                    ax = xmin*0.85, ay = ymax/2,
-                    xref = 'x2', axref = 'x2',
-                    yref = 'y2', ayref = 'y2',
-                    showarrow = TRUE, arrowhead = 3, arrowsize = 1,
-                    arrowwidth = 1, arrowcolor = 'black') %>%
-    # study data
-    add_trace(data = MA_data,
-              x = ~d_j, y = ~w_j_perc, text = ~ID, size = ~w_j_perc,
-              marker = list(size = ~w_j_perc,
-                            sizemode = "area", color = 'navy',
-                            line = list(color = "navy"),
-                            sizeref = sizeref),
-              hovertemplate = paste('<i>Study ID</i>: %{text}',
-                                    '<br><b>SMD</b>: %{x}<br>',
-                                    '<b>Weight </b>: %{y}</b>',
-                                    '<extra></extra>'),
-              showlegend = FALSE#,
-    ) %>%
-    # legend data - dots
-    add_trace(data = legend_data,
-              x = ~x, y = ~y, size = ~w_j_perc,
-              marker = list(size = ~w_j_perc,
-                            sizemode = "area", color = 'navy',
-                            line = list(color = "navy"),
-                            sizeref = sizeref),
-              showlegend = FALSE,
-              hoverinfo = "none"
-    ) %>%
-    # legend data - text
-    add_annotations(data = legend_data, text = ~w_j_perc,
-                    x = ~x + .05, y = ~y,
-                    showarrow = FALSE, xanchor = "left",
-                    yref = "y2", xref = "x2",
-                    font = list(size = font_sizes[6]),
-                    layer = 'above') %>%
-    add_annotations(text = "Weight", y = ymax*0.65, x = xmin*0.65,
-                    font = list(size = font_sizes[7]), yref = "y2", xref = "x2",
-                    showarrow = FALSE, xanchor = "center",
-                    layer = "above") %>%
-    # red / white rectangles
-    layout(plot_bgcolor = "#e5ecf6",
-           shapes = list(
-             # red for negative SMD region
-             list(type = "rect",
-                  fillcolor = "red",
-                  line = list(color = "red"),
-                  opacity = 0.2,
-                  y0 = -ymax*.1, y1 = ymax, #y1 = 1.15,
-                  x0 = xmin, x1 = 0,
-                  layer = 'below'),
-             # small white rectangles for Increase / Decrease annotations
-             list(type = "rect",
-                  fillcolor = "white",
-                  line = list(color = "black", width = 0.5),
-                  opacity = 1,
-                  y0 = -ymax*0.08, y1 = -ymax*0.02,
-                  x0 = xmin*.75, x1 = xmin*.25,
-                  layer = 'below'),
-             list(type = "rect",
-                  fillcolor = "white",
-                  line = list(color = "black", width = .5),
-                  opacity = 1,
-                  y0 = -ymax*0.08, y1 = -ymax*0.02,
-                  x0 = xmax*0.25, x1 = xmax*0.75,
-                  layer = 'below'),
-             list(type = "rect",
-                  fillcolor = "white",
-                  line = list(color = "black", width = 0.5),
-                  opacity = 0.5,
-                  y0 = ymax*0.3, y1 = ymax*.7,
-                  x0 = xmin*0.95, x1 = xmin*0.5,
-                  layer = 'below')
-           ),
-           # xaxis specifications
-           xaxis = list(title = "Standardized Mean Difference (SMD)",
-                        range = c(xmin, xmax),
-                        dtick = 0.2,
-                        tick0 = -1,
-                        tickmode = "linear",
-                        title = "Standardized Mean Difference (SMD)",
-                        showgrid = FALSE,
-                        gridcolor = '#ececec',
-                        gridwidth = .10,
-                        hoverformat = '.3f'
-           ),
-           # yaxis specifications
-           yaxis = list(title = "Weight",
-                        range = c(-ymax*.1, ymax),
-                        dtick = if_else(ceiling(ymax/5*100) %% 2 == 0,
-                                        ceiling(ymax/5*100)/100,
-                                        (ceiling(ymax/5*100) + 1)/100),
-                        tick0 = 0,
-                        tickmode = "linear",
-                        gridcolor = '#ececec',
-                        gridwidth = .10,
-                        showgrid = FALSE,
-                        hoverformat = '.4f'))
-
-  #combine top and bottom panes
-  plotly_viz <- subplot(viz_top, viz_bottom, nrows = 2,
-                        titleX = TRUE, titleY = TRUE, shareX = FALSE,
-                        heights = c(0.4,0.6),
-                        which_layout = 2)
-  plotly_viz %>% config(displayModeBar = FALSE)
-
+  return(p)
 }
 
