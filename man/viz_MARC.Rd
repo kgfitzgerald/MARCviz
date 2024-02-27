@@ -66,8 +66,10 @@ a plotly object (if type = "interactive") or ggplot object (if type = "static")
 Produces an interactive Meta-Analytic Rain Cloud (MARC) plot
 }
 \examples{
+library(tidyverse)
 data(viz_MA_data)
 d_j <- viz_MA_data \%>\% filter(k == 100) \%>\% pull(d_j)
 se_j <- viz_MA_data \%>\% filter(k == 100) \%>\% pull(se_j)
 viz_MARC(d_j, se_j, seed = 437)
+viz_MARC(d_j, se_j, seed = 437, type = "static")
 }

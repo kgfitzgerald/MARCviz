@@ -22,10 +22,12 @@
 #'
 #' @return a plotly object (if type = "interactive") or ggplot object (if type = "static")
 #' @examples
+#' library(tidyverse)
 #' data(viz_MA_data)
 #' d_j <- viz_MA_data %>% filter(k == 100) %>% pull(d_j)
 #' se_j <- viz_MA_data %>% filter(k == 100) %>% pull(se_j)
 #' viz_MARC(d_j, se_j, seed = 437)
+#' viz_MARC(d_j, se_j, seed = 437, type = "static")
 #' @export
 #' @importFrom dplyr "%>%"
 #' @importFrom dplyr "sample_n"

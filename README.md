@@ -40,11 +40,13 @@ Produce MARC plot (plotly - default)
 viz_MARC(d_j, se_j)
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-3-1.png)
+
 Produce MARC plot (ggplot)
 
 ``` r
 #create static MARC plot (ggplot object)
 viz_MARC(d_j, se_j, type = "static")
 ```
-
-![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](README_files/static.png)
+<!-- -->
