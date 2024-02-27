@@ -444,7 +444,7 @@ viz_MARC <- function(d_j = NULL,
     p <- plotly_viz %>% config(displayModeBar = FALSE)
   }
 
-  ################# INTERACTIVE (PLOTLY) VERSION ###################
+  ################# STATIC (GGPLOT)) VERSION ###################
   if(type == "static"){
     summary_data <- data.frame(d_j = summary_es,
                                se_j = summary_se)
@@ -454,9 +454,9 @@ viz_MARC <- function(d_j = NULL,
       theme_light(base_line_size = .1) +
       theme(axis.ticks.y = element_blank(),
             axis.line = element_blank(),
-            axis.text.x = element_text(size=16),
+            axis.text.x = element_text(size = 16),
             axis.text.y = element_text(size = 16),
-            axis.title=element_text(size=16),
+            axis.title=element_text(size = 16),
             panel.grid.minor.y = element_blank(),
             legend.position = c(),
             plot.caption = element_text(size = 10, face = "italic", color = "grey", hjust = 0)) +
@@ -521,8 +521,9 @@ viz_MARC <- function(d_j = NULL,
       annotate("text", x = xmin*.95 + abs(min(cloud_sample$d) - xmin)/2, y = 1,
                label = paste0("SUMMARY OF THE EVIDENCE:"),
                size = 4) +
-      geom_curve(size = .1,
-                 aes(x = min$d, y = 1 + min$noise, xend = summary_es, yend = .75),
+      annotate("curve", linewidth = .1,
+               x = min$d, y = 1 + min$noise,
+               xend = summary_es, yend = .75,
                  arrow = arrow(length = unit(0.01, "npc"))) +
       theme_void() +
       guides(size = "none") +
