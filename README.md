@@ -20,9 +20,9 @@ library(MARCviz)
 ?viz_MARC
 ```
 
-Produce MARC plot:
+Read data:
 
-```{r, warning = FALSE, message = FALSE, eval = FALSE}
+``` r
 library(tidyverse)
 #read in meta-analytic dataset
 data(viz_MA_data)
@@ -31,10 +31,18 @@ data(viz_MA_data)
 d_j <- viz_MA_data %>% filter(k == 100) %>% pull(d_j)
 #specify vector of standard errors
 se_j <- viz_MA_data %>% filter(k == 100) %>% pull(se_j)
+```
 
+Produce MARC plot (plotly - default)
+
+``` r
 #create MARC plot (default is interactive plotly object)
 viz_MARC(d_j, se_j)
+```
 
+Produce MARC plot (ggplot)
+
+``` r
 #create static MARC plot (ggplot object)
 viz_MARC(d_j, se_j, type = "static")
 ```
