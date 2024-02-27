@@ -7,6 +7,7 @@
 viz_MARC(
   d_j = NULL,
   se_j = NULL,
+  type = "interactive",
   confidence_level = 0.95,
   study_labels = NULL,
   seed = NULL,
@@ -27,6 +28,8 @@ viz_MARC(
 \item{d_j}{vector of effect size estimates}
 
 \item{se_j}{vector of standard errors of effect size estimates}
+
+\item{type}{type of graph, "interactive" (built by plotly) or "static" (built by ggplot)}
 
 \item{confidence_level}{confidence level for interval written in plot annotation (default = 0.95)}
 
