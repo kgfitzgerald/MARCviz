@@ -1,4 +1,4 @@
-MARCviz: A package for Meta-Analytic Rain-Cloud Plots
+MARCviz: R package for Meta-Analytic Rain-Cloud Plots
 ======================================
 [![License: GPL (>=3)](https://img.shields.io/badge/license-GPL-blue)](https://www.gnu.org/licenses/gpl-3.0.txt)
 
