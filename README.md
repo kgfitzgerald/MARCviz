@@ -41,18 +41,18 @@ d_j <- viz_MA_data %>% filter(k == 100) %>% pull(d_j)
 se_j <- viz_MA_data %>% filter(k == 100) %>% pull(se_j)
 ```
 
-Produce MARC plot (plotly - default)
+Produce MARC plot (ggplot - default)
 
 ```r
-#create MARC plot (default is interactive plotly object)
+#create MARC plot (default is static ggplot object)
 viz_MARC(d_j, se_j)
 ```
 
 Produce MARC plot (ggplot)
 
 ```r
-#create static MARC plot (ggplot object)
-viz_MARC(d_j, se_j, type = "static")
+#create interactive MARC plot (plotly object)
+viz_MARC(d_j, se_j, type = "interactive")
 ```
 
 # License, Citation, Issues

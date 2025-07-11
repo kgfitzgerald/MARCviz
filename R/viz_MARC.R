@@ -7,6 +7,7 @@
 #' @param d_j vector of effect size estimates
 #' @param se_j vector of standard errors of effect size estimates
 #' @param type type of graph, "interactive" (built by plotly) or "static" (built by ggplot) (default = static)
+#' @param method metafor method used to fit the meta-analytic model. See metafor documentation for all the method options (default = "FE")
 #' @param confidence_level confidence level for interval written in plot annotation (default = 0.95)
 #' @param summary_only TRUE/FALSE indicator for whether to display the summary effect ONLY (default = FALSE)
 #' @param study_labels vector of study labels (optional)
@@ -31,9 +32,11 @@
 #' viz_MARC(d_j, se_j, seed = 437)
 #' viz_MARC(d_j, se_j, seed = 437, type = "static")
 #' @export
+#' @import dplyr
 #' @importFrom dplyr "%>%"
 #' @importFrom dplyr "sample_n"
 #' @importFrom dplyr "mutate"
+#' @import metafor
 #' @importFrom metafor "rma.uni"
 #' @importFrom stats "qnorm"
 #' @importFrom stats "rnorm"
@@ -91,6 +94,7 @@ utils::globalVariables(c(
 viz_MARC <- function(d_j = NULL,
                      se_j = NULL,
                      type = "static",
+                     method = "FE",
                      confidence_level = 0.95,
                      summary_only = FALSE,
                      study_labels = NULL,
@@ -105,9 +109,8 @@ viz_MARC <- function(d_j = NULL,
                      textbox_width = 4,
                      digits = 2,
                      max_dot_size = 10
-                     ){
-  
-#------ Creating compatibility with the package "metafor" ---------
+){
+  #------ Creating compatibility with the package "metafor" ---------
   # for metafor 
   if (inherits(d_j, "rma.uni")) {
     d_j_obj <- d_j # keep the original rma.uni object for reference
@@ -126,11 +129,11 @@ viz_MARC <- function(d_j = NULL,
     }
   }
   
-# for tidyverse 
+  # for tidyverse 
   #  we are using dplyr functions
   #  and using ggplot2
   
-#---------------- Error messages -----------------------------
+  #---------------- Error messages -----------------------------
   
   # Check for negative standard errors
   if (any(se_j < 0)) {
@@ -160,8 +163,8 @@ viz_MARC <- function(d_j = NULL,
   if (!is.numeric(confidence_level) || confidence_level <= 0 || confidence_level >= 1) {
     stop("confidence_level must be a numeric value between 0 and 1.")
   }
- 
- #------ create MA_data from d_j and se_j inputs -------
+  
+  #------ create MA_data from d_j and se_j inputs -------
   # create MA_data from d_j and se_j inputs
   MA_data <- data.frame(d_j, se_j)
   #specify # of studies k
@@ -182,31 +185,35 @@ viz_MARC <- function(d_j = NULL,
     MA_data <- MA_data %>%
       sample_n(size = k)
   }
-
-  #compute fixed-effects meta-analytic weights
+  
+  #compute meta-analytic weights
+  MA_data$w_j = weights(rma.uni(yi = MA_data$d_j,
+                                sei = MA_data$se_j,
+                                method = method))
+  
   MA_data <- MA_data %>%
-    mutate(w_j = 1/(se_j^2),
-           w_j_perc = w_j/sum(w_j))
-
+    mutate(w_j_perc = w_j/sum(w_j))
+  
+  
   #store maximum (absolute) effect size
   #to be used for plot scaling purposes
   max_abs_es <- max(abs(MA_data$d_j))
-
+  
   #compute summary effect size - fixed effects model
   summary_es <- as.numeric(rma.uni(yi = MA_data$d_j,
                                    sei = MA_data$se_j,
-                                   method = "FE")$b)
+                                   method = method)$b)
   #compute summary standard error - fixed effects model
   summary_se <- as.numeric(rma.uni(yi = MA_data$d_j,
                                    sei = MA_data$se_j,
-                                   method = "FE")$se)
-
+                                   method = method)$se)
+  
   # compute lower and upper bounds of confidence interval at specified level
   critical_value <- qnorm((1 - confidence_level)/2, lower.tail = FALSE)
   CIlb <- summary_es - critical_value*summary_se
   CIub <- summary_es + critical_value*summary_se
-
-
+  
+  
   # set study labels to be integers 1:k if not provided by user
   if(is.null(study_labels)){
     study_labels <- c(seq(1:k))
@@ -221,8 +228,8 @@ viz_MARC <- function(d_j = NULL,
   MA_data <- MA_data %>%
     #create ID variable to be used as y-axis labels
     mutate(ID = factor(study_labels, ordered = TRUE))
-
-
+  
+  
   # set max x value for plotting purposes
   if(is.null(x_limits)){
     #round max (abs) d value up to next tenth, then add .2 buffer (.1 for both sides)
@@ -235,14 +242,14 @@ viz_MARC <- function(d_j = NULL,
     xmin <- x_limits[1]
     xmax <- x_limits[2]
   }
-
+  
   # set max y value for plotting purposes
   if(is.null(y_limits)){
     #if max weight is above 0.4, then allow y-axis labels to increment by 0.15
     ymax <- if_else(max(MA_data$w_j_perc) > .4,
-                  ceiling(1.15*max(MA_data$w_j_perc)*100)/100,
-                  #otherwise allow them to increment by 0.10
-                  ceiling(1.1*max(MA_data$w_j_perc)*100)/100)
+                    ceiling(1.15*max(MA_data$w_j_perc)*100)/100,
+                    #otherwise allow them to increment by 0.10
+                    ceiling(1.1*max(MA_data$w_j_perc)*100)/100)
     #max weight rounded up to nearest hundredth
     ymax <- if_else((ymax*100) %% 2 == 0, ymax, ymax + 0.01)
     ymin <- 0 - ymax
@@ -260,7 +267,7 @@ viz_MARC <- function(d_j = NULL,
     stop("textbox_width must be a positive number.")
   }
   
-
+  
   ################# INTERACTIVE (PLOTLY) VERSION ###################
   if(type == "interactive"){
     #create coordinates for legend (added as manual annotations)
@@ -282,7 +289,7 @@ viz_MARC <- function(d_j = NULL,
     } else{
       legend_data <- legend_data
     }
-
+    
     #recommendation from https://plotly.com/r/bubble-charts/
     if(is.null(sizeref)){
       #sizeref <- 2.0 * max(MA_data$w_j_perc) / (max_marker_size**2)
@@ -291,7 +298,7 @@ viz_MARC <- function(d_j = NULL,
     } else{
       sizeref <- sizeref
     }
-
+    
     ## TOP PANE OF VISUALIZATION (w/ Summary evidence + annotations)
     viz_top <- plot_ly(type = "scatter", mode = "markers", fill = "",
                        width = width, height = height)  %>%
@@ -375,7 +382,7 @@ viz_MARC <- function(d_j = NULL,
                           showgrid = FALSE,
                           showticklabels = FALSE,
                           zeroline = F))
-
+    
     ## BOTTOM PANE OF VISUALIZATION (with study data)
     viz_bottom <- plot_ly(type = "scatter", mode = "markers", fill = "",
                           width = 650, height = 425) %>%
@@ -391,7 +398,7 @@ viz_MARC <- function(d_j = NULL,
                       showarrow = FALSE, xanchor = "center",
                       font = list(size = font_sizes[4]),
                       layer = 'above') %>%
-
+      
       # More / Less certain annotations
       add_annotations(text = "More certain",
                       x = xmin*.85, y = ymax*.65,
@@ -513,7 +520,7 @@ viz_MARC <- function(d_j = NULL,
                           gridwidth = .10,
                           showgrid = FALSE,
                           hoverformat = '.4f'))
-
+    
     #combine top and bottom panes
     plotly_viz <- subplot(viz_top, viz_bottom, nrows = 2,
                           titleX = TRUE, titleY = TRUE, shareX = FALSE,
@@ -521,7 +528,7 @@ viz_MARC <- function(d_j = NULL,
                           which_layout = 2)
     p <- plotly_viz %>% config(displayModeBar = FALSE)
   }
-
+  
   ################# STATIC (GGPLOT)) VERSION ###################
   if(type == "static"){
     summary_data <- data.frame(d_j = summary_es,
@@ -584,178 +591,178 @@ viz_MARC <- function(d_j = NULL,
       # set x-axis label
       ggplot2::xlab("Standardized Mean Difference (SMD)")
     
-
-# ggplot2::xlab("Standardized Mean Difference (SMD)")
-# ggplot2::xlab("Standardized Mean Difference (SMD)")
-# ggplot2::xlab("Standardized Mean Difference (SMD)")
-
+    
+    # ggplot2::xlab("Standardized Mean Difference (SMD)")
+    # ggplot2::xlab("Standardized Mean Difference (SMD)")
+    # ggplot2::xlab("Standardized Mean Difference (SMD)")
+    
+    
+    #### IF DISPLAYING STUDY LABELS: DODGE BY DOT RADIUS ###
+    if(show_study_labels == TRUE){
+      # Extract meta-data from "bottom" ggplot object 
+      # to get value of size aesthetic for each dot
+      pb <- ggplot_build(bottom)
+      point_data <- pb$data[[9]]
+      # Get panel scales to extract x and y ranges
+      panel_params <- pb$layout$panel_params[[1]]
+      # x and y ranges
+      x_range <- diff(panel_params$x.range)
+      y_range <- diff(panel_params$y.range)
+      # convert plot dimensions from inches to mm
+      plot_width_mm <- width_in * 25.4
+      plot_height_mm <- height_in * 25.4
+      # compute data units per mm
+      x_units_per_mm <- x_range / plot_width_mm
+      y_units_per_mm <- y_range / plot_height_mm
       
-      #### IF DISPLAYING STUDY LABELS: DODGE BY DOT RADIUS ###
-      if(show_study_labels == TRUE){
-        # Extract meta-data from "bottom" ggplot object 
-        # to get value of size aesthetic for each dot
-        pb <- ggplot_build(bottom)
-        point_data <- pb$data[[9]]
-        # Get panel scales to extract x and y ranges
-        panel_params <- pb$layout$panel_params[[1]]
-        # x and y ranges
-        x_range <- diff(panel_params$x.range)
-        y_range <- diff(panel_params$y.range)
-        # convert plot dimensions from inches to mm
-        plot_width_mm <- width_in * 25.4
-        plot_height_mm <- height_in * 25.4
-        # compute data units per mm
-        x_units_per_mm <- x_range / plot_width_mm
-        y_units_per_mm <- y_range / plot_height_mm
-        
-        MA_data <- MA_data |> 
-          mutate(diameter = point_data$size, #in mm
-                 radius = diameter/2, #in mm
-                 # convert radius from mm to data units
-                 radius_x_units = radius*x_units_per_mm,
-                 radius_y_units = radius*y_units_per_mm)
-        
-        # Add study labels, offset in x direction by radius of dot
-        # then repelled in y-direction only to avoid overlap
-        bottom <- bottom + 
-          geom_text_repel(data = MA_data,   ggplot2::aes(x = d_j + radius_x_units,
-                                              y = w_j_perc,
-                                              label = paste("Study ", ID)),
-                          direction = "y",
-                          size = 2)
-      }
+      MA_data <- MA_data |> 
+        mutate(diameter = point_data$size, #in mm
+               radius = diameter/2, #in mm
+               # convert radius from mm to data units
+               radius_x_units = radius*x_units_per_mm,
+               radius_y_units = radius*y_units_per_mm)
       
-      ##### CREATE "top" PLOT (that displays summary) ######
-      if(summary_only == FALSE){
-        top <- base +
-          # boundaries of white rectangle for summary display
-          ggplot2::annotate("rect",
-                   xmin = x_limits[1],
-                   xmax = x_limits[2],
-                   ymin = y_limits_rect[1],
-                   ymax = y_limits_rect[2],
-                   alpha = .9, fill = "white") +
-          # add annotation for Average SMD and # of studies
-          ggplot2::annotate("text", x = xmin*.95, y = 1,
-                   label = paste("Average SMD: ", 
-                                 round(summary_es, digits),
-                                 "\n# of Studies: ", k),
-                   hjust = 0, size = font_sizes[2]*5/14) +
-          # add SUMMARY OF THE EVIDENCE annotation
-          ggplot2::annotate("text", x = x_limits[1], 
-                   y = y_limits_rect[2]*1.1, hjust = 0,
-                   label = paste0("SUMMARY OF THE EVIDENCE:"),
-                   size = font_sizes[1]*5/14) +
-          
-          stat_dots(
-            data = tibble::tibble(
-              .dist = distributional::dist_normal(summary_es, summary_se)
-            ),
-            ggplot2::aes(y = 1, xdist = .dist),
-            side = "both", scale = 0.4
-          ) +
-          # add the navy blue summary dot
-            ggplot2::geom_point(data = summary_data, 
-                     ggplot2::aes(x = d_j, y = 1), size = 5,
-                     color = "navyblue") +
-          # add the explanatory annotation for interpreting the summary
-          geom_textbox(x = summary_data$d_j, y = y_limits_rect[1]*.96, 
-                       label = paste0("Based on the existing evidence, 
+      # Add study labels, offset in x direction by radius of dot
+      # then repelled in y-direction only to avoid overlap
+      bottom <- bottom + 
+        geom_text_repel(data = MA_data,   ggplot2::aes(x = d_j + radius_x_units,
+                                                       y = w_j_perc,
+                                                       label = paste("Study ", ID)),
+                        direction = "y",
+                        size = 2)
+    }
+    
+    ##### CREATE "top" PLOT (that displays summary) ######
+    if(summary_only == FALSE){
+      top <- base +
+        # boundaries of white rectangle for summary display
+        ggplot2::annotate("rect",
+                          xmin = x_limits[1],
+                          xmax = x_limits[2],
+                          ymin = y_limits_rect[1],
+                          ymax = y_limits_rect[2],
+                          alpha = .9, fill = "white") +
+        # add annotation for Average SMD and # of studies
+        ggplot2::annotate("text", x = xmin*.95, y = 1,
+                          label = paste("Average SMD: ", 
+                                        round(summary_es, digits),
+                                        "\n# of Studies: ", k),
+                          hjust = 0, size = font_sizes[2]*5/14) +
+        # add SUMMARY OF THE EVIDENCE annotation
+        ggplot2::annotate("text", x = x_limits[1], 
+                          y = y_limits_rect[2]*1.1, hjust = 0,
+                          label = paste0("SUMMARY OF THE EVIDENCE:"),
+                          size = font_sizes[1]*5/14) +
+        
+        stat_dots(
+          data = tibble::tibble(
+            .dist = distributional::dist_normal(summary_es, summary_se)
+          ),
+          ggplot2::aes(y = 1, xdist = .dist),
+          side = "both", scale = 0.4
+        ) +
+        # add the navy blue summary dot
+        ggplot2::geom_point(data = summary_data, 
+                            ggplot2::aes(x = d_j, y = 1), size = 5,
+                            color = "navyblue") +
+        # add the explanatory annotation for interpreting the summary
+        geom_textbox(x = summary_data$d_j, y = y_limits_rect[1]*.96, 
+                     label = paste0("Based on the existing evidence, 
                                         our best estimate of the true SMD for this 
                                         intervention is ", 
-                                      round(summary_es, 2), 
-                                      ", with a plausible range spanning from ", 
-                                      round(CIlb, 2), " to ", round(CIub, 2), 
-                                      ". This summary estimate has a relative 
+                                    round(summary_es, 2), 
+                                    ", with a plausible range spanning from ", 
+                                    round(CIlb, 2), " to ", round(CIub, 2), 
+                                    ". This summary estimate has a relative 
                                         weight of 1.0, making it more certain than 
                                         any of the individual estimates below."),
-                       alpha = 0.5,
-                       size = font_sizes[3] * 5 / 14, 
-                       vjust = 1,
-                       box.color = NA, 
-                       fill = "white", 
-                       width =   ggplot2::unit(textbox_width, "inches")) +
-            ggplot2::theme_void() +
-            ggplot2::guides(size = "none") +
-            ggplot2::xlim(xmin, xmax)
-        ### COMBINE TOP AND BOTTOM PLOTS
-        p <- cowplot::plot_grid(top, bottom, ncol = 1, align = "v",
-                                axis = "lr",
-                                rel_heights = c(0.4,0.6))
-      } else{
-        top <- ggplot(MA_data) +
-          # remove axes and superfluous grids
-          theme_light(base_line_size = .1) +
-          #create red/blue shading to distinguish negative/positive SMD regions
-          geom_vline(xintercept = 0, alpha = 0.3) +
-          ggplot2::annotate("rect", xmin = -Inf, xmax = 0, ymin = -Inf, ymax = Inf,
-                            alpha = .1, fill = "red") +
-          ggplot2::annotate("rect", xmin = 0, xmax = Inf, ymin = -Inf, ymax = Inf,
-                            alpha = .1, fill = "blue") +
-          # add annotation for Average SMD and # of studies
-          ggplot2::annotate("text", x = xmin*.95, y = 1,
-                            label = paste("Average SMD: ", 
-                                          round(summary_es, digits),
-                                          "\n# of Studies: ", k),
-                            hjust = 0, size = font_sizes[2]*5/14 + 2) +
-          labs(title = "SUMMARY OF THE EVIDENCE") +
-          # add the cloud dots
-          stat_dots(
-            data = tibble::tibble(
-              .dist = distributional::dist_normal(summary_es, summary_se)
-            ),
-            ggplot2::aes(y = 1, xdist = .dist),
-            side = "both", scale = 0.4
-          )
-        +
-          # add the navy blue summary dot
-            ggplot2::geom_point(data = summary_data, 
-                     ggplot2::aes(x = d_j, y = 1), size = 5,
-                     color = "navyblue") + 
-          # add the explanatory annotation for interpreting the summary
-          geom_textbox(x = summary_data$d_j, y = y_limits_rect[2]*1.25, 
-                       #x = 0.05, y = y_limits_rect[2]*1.1,
-                       label = paste0("Based on the existing evidence from ", k,
-                                      " studies, our best estimate of the true SMD 
+                     alpha = 0.5,
+                     size = font_sizes[3] * 5 / 14, 
+                     vjust = 1,
+                     box.color = NA, 
+                     fill = "white", 
+                     width =   ggplot2::unit(textbox_width, "inches")) +
+        ggplot2::theme_void() +
+        ggplot2::guides(size = "none") +
+        ggplot2::xlim(xmin, xmax)
+      ### COMBINE TOP AND BOTTOM PLOTS
+      p <- cowplot::plot_grid(top, bottom, ncol = 1, align = "v",
+                              axis = "lr",
+                              rel_heights = c(0.4,0.6))
+    } else{
+      top <- ggplot(MA_data) +
+        # remove axes and superfluous grids
+        theme_light(base_line_size = .1) +
+        #create red/blue shading to distinguish negative/positive SMD regions
+        geom_vline(xintercept = 0, alpha = 0.3) +
+        ggplot2::annotate("rect", xmin = -Inf, xmax = 0, ymin = -Inf, ymax = Inf,
+                          alpha = .1, fill = "red") +
+        ggplot2::annotate("rect", xmin = 0, xmax = Inf, ymin = -Inf, ymax = Inf,
+                          alpha = .1, fill = "blue") +
+        # add annotation for Average SMD and # of studies
+        ggplot2::annotate("text", x = xmin*.95, y = 1,
+                          label = paste("Average SMD: ", 
+                                        round(summary_es, digits),
+                                        "\n# of Studies: ", k),
+                          hjust = 0, size = font_sizes[2]*5/14 + 2) +
+        labs(title = "SUMMARY OF THE EVIDENCE") +
+        # add the cloud dots
+        stat_dots(
+          data = tibble::tibble(
+            .dist = distributional::dist_normal(summary_es, summary_se)
+          ),
+          ggplot2::aes(y = 1, xdist = .dist),
+          side = "both", scale = 0.4
+        )
+      +
+        # add the navy blue summary dot
+        ggplot2::geom_point(data = summary_data, 
+                            ggplot2::aes(x = d_j, y = 1), size = 5,
+                            color = "navyblue") + 
+        # add the explanatory annotation for interpreting the summary
+        geom_textbox(x = summary_data$d_j, y = y_limits_rect[2]*1.25, 
+                     #x = 0.05, y = y_limits_rect[2]*1.1,
+                     label = paste0("Based on the existing evidence from ", k,
+                                    " studies, our best estimate of the true SMD 
                                       for this intervention is ", 
-                                      round(summary_es, 2), 
-                                      ", with a plausible range spanning from ", 
-                                      round(CIlb, 2), " to ", round(CIub, 2), 
-                                      "."),
-                       alpha = 0.5,
-                       size = font_sizes[3] * 5 / 14 + 1, 
-                       #hjust = 0,
-                       vjust = 1,
-                       box.color = NA, 
-                       fill = "white", 
-                       width =   ggplot2::unit(textbox_width, "inches")) +
-          scale_x_continuous("Standardized Mean Difference (SMD)",
-                             limits = c(xmin, xmax), 
-                             breaks = round(seq(xmin, xmax, 0.2),1)) +
-          # set x-axis label
-          xlab("Standardized Mean Difference (SMD)") +
-          # create labels to aid in interpretation of x-axis (SMD)
-          ggplot2::annotate("label", label = "Decreased scores (SMD < 0)",
-                            vjust = 1, hjust = 1, label.size = 0,
-                            x = -0.1, y = 0.55, size = font_sizes[4]*5/14 + 1) +
-          ggplot2::annotate("label", label = "Increased scores (SMD > 0)",
-                            vjust = 1, hjust = 0, label.size = 0,
-                            x = 0.1, y = 0.55, size = font_sizes[4]*5/14 + 1) +
-          theme(
-            axis.title.y = element_blank(),    # remove y-axis title
-            axis.text.y = element_blank(),     # remove y-axis text labels
-            axis.ticks.y = element_blank(),    # remove y-axis ticks
-            panel.grid.major = element_blank(), # remove major grid lines
-            panel.grid.minor = element_blank(),  # remove minor grid lines
-            axis.text.x = element_text(size = 12),
-            axis.title=element_text(size = 12),
-            plot.margin = margin(t = 20, r = 50, b = 20, l = 50)
-          )
-        p <- top
-      }
+                                    round(summary_es, 2), 
+                                    ", with a plausible range spanning from ", 
+                                    round(CIlb, 2), " to ", round(CIub, 2), 
+                                    "."),
+                     alpha = 0.5,
+                     size = font_sizes[3] * 5 / 14 + 1, 
+                     #hjust = 0,
+                     vjust = 1,
+                     box.color = NA, 
+                     fill = "white", 
+                     width =   ggplot2::unit(textbox_width, "inches")) +
+        scale_x_continuous("Standardized Mean Difference (SMD)",
+                           limits = c(xmin, xmax), 
+                           breaks = round(seq(xmin, xmax, 0.2),1)) +
+        # set x-axis label
+        xlab("Standardized Mean Difference (SMD)") +
+        # create labels to aid in interpretation of x-axis (SMD)
+        ggplot2::annotate("label", label = "Decreased scores (SMD < 0)",
+                          vjust = 1, hjust = 1, label.size = 0,
+                          x = -0.1, y = 0.55, size = font_sizes[4]*5/14 + 1) +
+        ggplot2::annotate("label", label = "Increased scores (SMD > 0)",
+                          vjust = 1, hjust = 0, label.size = 0,
+                          x = 0.1, y = 0.55, size = font_sizes[4]*5/14 + 1) +
+        theme(
+          axis.title.y = element_blank(),    # remove y-axis title
+          axis.text.y = element_blank(),     # remove y-axis text labels
+          axis.ticks.y = element_blank(),    # remove y-axis ticks
+          panel.grid.major = element_blank(), # remove major grid lines
+          panel.grid.minor = element_blank(),  # remove minor grid lines
+          axis.text.x = element_text(size = 12),
+          axis.title=element_text(size = 12),
+          plot.margin = margin(t = 20, r = 50, b = 20, l = 50)
+        )
+      p <- top
+    }
   }
-      
-      return(p)
-}
   
+  return(p)
+}
+
 
