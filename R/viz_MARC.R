@@ -110,12 +110,22 @@ viz_MARC <- function(d_j = NULL,
                      max_dot_size = 10
 ){
 
-  
+  #If metafor object is passed through first: 
+  if (inherits(d_j,c("rma","rma.uni","rma.mh","rma.peto","rma.glmm","rma.mv"))){
+    method_obj = d_j
+    d_j = NULL
+  }
+  #If metafor object is passed through second: 
+  if (inherits(se_j,c("rma","rma.uni","rma.mh","rma.peto","rma.glmm","rma.mv"))){
+    method_obj = se_j
+    se_j = NULL
+  }
   # for tidyverse 
   #  we are using dplyr functions
   #  and using ggplot2
   
   #---------------- Error messages -----------------------------
+
   # Check that either effect sizes and standard errors are provided or a metafor object
   if(is.null(method_obj)& (is.null(d_j)&is.null(se_j))){
     stop("Missing Effect sizes, standard errors, and metafor object. 
