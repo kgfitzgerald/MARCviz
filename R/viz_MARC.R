@@ -6,8 +6,9 @@
 #'
 #' @param d_j vector of effect size estimates
 #' @param se_j vector of standard errors of effect size estimates
+#' @param weights vector of weights provided. Necessary for the "GENQ" method. 
 #' @param type type of graph, "interactive" (built by plotly) or "static" (built by ggplot) (default = static)
-#' @param method metafor method used to fit the meta-analytic model. See metafor documentation for all the method options (default = "FE")
+#' @param method_obj metafor object used to fit the meta-analytic model, includes rma.uni(),rma(), rma.mh(),rma.peto(), rma.glmm() or rma.mv() (If not specified, rma.uni(yi=d_j,sei=se_j, method="FE") is used)
 #' @param confidence_level confidence level for interval written in plot annotation (default = 0.95)
 #' @param summary_only TRUE/FALSE indicator for whether to display the summary effect ONLY (default = FALSE)
 #' @param study_labels vector of study labels (optional)
@@ -37,7 +38,6 @@
 #' @importFrom dplyr "sample_n"
 #' @importFrom dplyr "mutate"
 #' @import metafor
-#' @importFrom metafor "rma.uni"
 #' @importFrom stats "qnorm"
 #' @importFrom stats "rnorm"
 #' @importFrom stats "dnorm"
@@ -93,8 +93,9 @@ utils::globalVariables(c(
 
 viz_MARC <- function(d_j = NULL,
                      se_j = NULL,
+                     weights = NULL,
                      type = "static",
-                     method = "FE",
+                     method_obj = NULL,
                      confidence_level = 0.95,
                      summary_only = FALSE,
                      study_labels = NULL,
@@ -110,51 +111,45 @@ viz_MARC <- function(d_j = NULL,
                      digits = 2,
                      max_dot_size = 10
 ){
-  #------ Creating compatibility with the package "metafor" ---------
-  # for metafor 
-  if (inherits(d_j, "rma.uni")) {
-    d_j_obj <- d_j # keep the original rma.uni object for reference
-    d_j <- d_j_obj$yi # get the effect sizes
-    
-    # try to extract standard errors from the model object
-    se_j <- if (!is.null(d_j_obj$sei) && length(d_j_obj$sei) > 0) {
-      d_j_obj$sei
-    } else if (!is.null(d_j_obj$se) && length(d_j_obj$se) == 1) {
-      # replicate single SE to match d_j length if applicable
-      rep(d_j_obj$se, length(d_j))
-    } else if (!is.null(d_j_obj$se) && length(d_j_obj$se) == length(d_j)) {
-      d_j_obj$se
-    } else {
-      stop("Could not find valid standard errors in the provided metafor object.")
-    }
-  }
+
   
   # for tidyverse 
   #  we are using dplyr functions
   #  and using ggplot2
   
   #---------------- Error messages -----------------------------
-  
-  # Check for negative standard errors
-  if (any(se_j < 0)) {
-    stop("Negative values found in se_j. Standard errors must be positive.")
+  # Check that either effect sizes and standard errors are provided or a metafor object
+  if(is.null(method_obj)& (is.null(d_j)&is.null(se_j))){
+    stop("Missing Effect sizes, standard errors, and metafor object. 
+         Effect sizes and standard errors or metafor object must be provided.")
   }
+  
+   # If metafor object is not provided, check the following
+  if (is.null(method_obj)){
+    #Check for provided standard errors
+    if (is.null(se_j)){
+      stop("No provided standard errors. Standard errors must be provided.")
+    }
+  # Check for negative standard errors
+    if (any(se_j < 0)) {
+      stop("Negative values found in se_j. Standard errors must be positive.")
+    }
   
   # Check if both d_j and se_j are numeric vectors
-  if (!is.numeric(d_j) || !is.numeric(se_j)) {
-    stop("Both d_j and se_j must be numeric vectors.")
-  }
+    if (!is.numeric(d_j) || !is.numeric(se_j)) {
+      stop("Both d_j and se_j must be numeric vectors.")
+    }
   
   # Check that d_j and se_j are same length
-  if (length(d_j) != length(se_j)) {
-    stop("d_j and se_j must be the same length.")
-  }
+    if (length(d_j) != length(se_j)) {
+      stop("d_j and se_j must be the same length.")
+    }
   
   # Check for missing values
-  if (any(is.na(d_j)) || any(is.na(se_j))) {
-    stop("Missing values detected in d_j or se_j. Please remove or impute missing values before plotting.")
+    if (any(is.na(d_j)) || any(is.na(se_j))) {
+      stop("Missing values detected in d_j or se_j. Please remove or impute missing values before plotting.")
+    }
   }
-  
   if (!type %in% c("static", "interactive")) {
     stop("The 'type' argument must be either 'static' or 'interactive'.")
   }
@@ -164,9 +159,34 @@ viz_MARC <- function(d_j = NULL,
     stop("confidence_level must be a numeric value between 0 and 1.")
   }
   
-  #------ create MA_data from d_j and se_j inputs -------
-  # create MA_data from d_j and se_j inputs
-  MA_data <- data.frame(d_j, se_j)
+  #------ create MA_data from d_j inputs -------
+  # create MA_data from d_j inputs if provided
+  if (!is.null(d_j)){
+  MA_data <- data.frame(d_j)
+    #if not method is specified, set method object to the default
+    if (!is.null(se_j)&is.null(method_obj)){ 
+      MA_data$se_j <- se_j
+       method_obj = rma.uni(yi = MA_data$d_j,
+                       sei = MA_data$se_j,
+                       method = "FE")
+    }
+    else if (is.null(se_j)&is.null(method_obj)){
+      stop("Standard errors or metafor object are not provided")
+    }
+  }
+  else if(is.null(d_j)&!is.null(method_obj)){
+    if (!is.null(method_obj$yi)){
+      d_j <- as.numeric(method_obj$yi)
+    MA_data <-data.frame(d_j)
+    }
+    else{
+      stop("Metfor object does not include effect sizes/outcome")
+    }
+  }
+  else{
+    stop("No effect sizes and standard errors or metafor object provided")
+  }
+  
   #specify # of studies k
   #NOTE TO SELF: For future CRAN package, will need to update this to be flexible for
   #studies w/ multiple effect sizes
@@ -177,19 +197,10 @@ viz_MARC <- function(d_j = NULL,
     stop("At least two studies are required to produce a meta-analytic plot.")
   }
   
-  #randomly sort rows
-  #useful in experimental setting so studies
-  #don't appear in the same order for every vis
-  if(!is.null(seed)){
-    set.seed(seed)
-    MA_data <- MA_data %>%
-      sample_n(size = k)
-  }
-  
+
   #compute meta-analytic weights
-  MA_data$w_j = weights(rma.uni(yi = MA_data$d_j,
-                                sei = MA_data$se_j,
-                                method = method))
+  
+  MA_data$w_j = weights(method_obj)
   
   MA_data <- MA_data %>%
     mutate(w_j_perc = w_j/sum(w_j))
@@ -200,13 +211,9 @@ viz_MARC <- function(d_j = NULL,
   max_abs_es <- max(abs(MA_data$d_j))
   
   #compute summary effect size - fixed effects model
-  summary_es <- as.numeric(rma.uni(yi = MA_data$d_j,
-                                   sei = MA_data$se_j,
-                                   method = method)$b)
+  summary_es <- as.numeric(method_obj$b)
   #compute summary standard error - fixed effects model
-  summary_se <- as.numeric(rma.uni(yi = MA_data$d_j,
-                                   sei = MA_data$se_j,
-                                   method = method)$se)
+  summary_se <- as.numeric(method_obj$se)
   
   # compute lower and upper bounds of confidence interval at specified level
   critical_value <- qnorm((1 - confidence_level)/2, lower.tail = FALSE)
@@ -221,13 +228,23 @@ viz_MARC <- function(d_j = NULL,
     study_labels <- c(study_labels)
   }
   
-  if (!is.null(study_labels) && length(study_labels) != length(d_j)) {
+  if (!is.null(study_labels) && length(study_labels) != length(MA_data$d_j)) {
     stop("Length of study_labels does not match length of d_j.")
   }
   
   MA_data <- MA_data %>%
     #create ID variable to be used as y-axis labels
     mutate(ID = factor(study_labels, ordered = TRUE))
+  
+  #randomly sort rows
+  #useful in experimental setting so studies
+  #don't appear in the same order for every vis
+  #moved this from earlier on to later
+  if(!is.null(seed)){
+    set.seed(seed)
+    MA_data <- MA_data %>%
+      sample_n(size = k)
+  }
   
   
   # set max x value for plotting purposes
