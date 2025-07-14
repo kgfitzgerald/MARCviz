@@ -6,9 +6,8 @@
 #'
 #' @param d_j vector of effect size estimates
 #' @param se_j vector of standard errors of effect size estimates
-#' @param weights vector of weights provided. Necessary for the "GENQ" method. 
-#' @param type type of graph, "interactive" (built by plotly) or "static" (built by ggplot) (default = static)
 #' @param method_obj metafor object used to fit the meta-analytic model, includes rma.uni(),rma(), rma.mh(),rma.peto(), rma.glmm() or rma.mv() (If not specified, rma.uni(yi=d_j,sei=se_j, method="FE") is used)
+#' @param type type of graph, "interactive" (built by plotly) or "static" (built by ggplot) (default = static)
 #' @param confidence_level confidence level for interval written in plot annotation (default = 0.95)
 #' @param summary_only TRUE/FALSE indicator for whether to display the summary effect ONLY (default = FALSE)
 #' @param study_labels vector of study labels (optional)
@@ -93,9 +92,8 @@ utils::globalVariables(c(
 
 viz_MARC <- function(d_j = NULL,
                      se_j = NULL,
-                     weights = NULL,
-                     type = "static",
                      method_obj = NULL,
+                     type = "static",
                      confidence_level = 0.95,
                      summary_only = FALSE,
                      study_labels = NULL,
