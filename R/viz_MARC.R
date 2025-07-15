@@ -113,6 +113,7 @@ viz_MARC <- function(d_j = NULL,
                      font_sizes = c(14, 10, 8, 9, 8, 7, 10,12,12),
                      textbox_width = 4,
                      digits = 2,
+                     xinc=.2,
                      max_dot_size = 10
 ){
 
@@ -684,7 +685,7 @@ viz_MARC <- function(d_j = NULL,
       # set x-axis breaks to have 1-decimal numbers in 0.2 increments from xmin to xmax
       ggplot2::scale_x_continuous("Standardized Mean Difference (SMD)",
                                   limits = c(xmin, xmax), 
-                                  breaks = round(seq(xmin, xmax, 0.2),1)) +
+                                  breaks = round(seq(xmin, xmax, xinc),1)) +
       # set x-axis label
       ggplot2::xlab("Standardized Mean Difference (SMD)")
     
