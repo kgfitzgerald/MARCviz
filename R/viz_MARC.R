@@ -6,7 +6,10 @@
 #'
 #' @param d_j vector of effect size estimates
 #' @param se_j vector of standard errors of effect size estimates
+#' @param w_j vector or matrix of user input weights for the effect size estimates
 #' @param method_obj metafor object used to fit the meta-analytic model, includes rma.uni(),rma(), rma.mh(),rma.peto(), rma.glmm() or rma.mv() (If not specified, rma.uni(yi=d_j,sei=se_j, method="FE") is used)
+#' @param summary_es user input meta-analytic summary effect size
+#' @param summary_se user input meta-analystic summeray standard error
 #' @param type type of graph, "interactive" (built by plotly) or "static" (built by ggplot) (default = static)
 #' @param confidence_level confidence level for interval written in plot annotation (default = 0.95)
 #' @param summary_only TRUE/FALSE indicator for whether to display the summary effect ONLY (default = FALSE)
@@ -92,7 +95,10 @@ utils::globalVariables(c(
 
 viz_MARC <- function(d_j = NULL,
                      se_j = NULL,
+                     w_j = NULL,
                      method_obj = NULL,
+                     summary_es=NULL,
+                     summary_se=NULL,
                      type = "static",
                      confidence_level = 0.95,
                      summary_only = FALSE,
@@ -120,6 +126,11 @@ viz_MARC <- function(d_j = NULL,
     method_obj = se_j
     se_j = NULL
   }
+  #If metafor object is passed through third: 
+  if (inherits(w_j,c("rma","rma.uni","rma.mh","rma.peto","rma.glmm","rma.mv"))){
+    method_obj = w_j
+    w_j = NULL
+  }
   # for tidyverse 
   #  we are using dplyr functions
   #  and using ggplot2
@@ -127,26 +138,28 @@ viz_MARC <- function(d_j = NULL,
   #---------------- Error messages -----------------------------
 
   # Check that either effect sizes and standard errors are provided or a metafor object
-  if(is.null(method_obj)& (is.null(d_j)&is.null(se_j))){
-    stop("Missing Effect sizes, standard errors, and metafor object. 
-         Effect sizes and standard errors or metafor object must be provided.")
+  if(is.null(method_obj)& (is.null(d_j))){
+    stop("Missing Effect sizes or metafor object. 
+         Effect sizes or metafor object must be provided.")
   }
   
    # If metafor object is not provided, check the following
   if (is.null(method_obj)){
+    #if summaries are not provided, check the following
+    if(is.null(summary_es)||is.null(summary_se)||is.null(w_j)){
     #Check for provided standard errors
     if (is.null(se_j)){
-      stop("No provided standard errors. Standard errors must be provided.")
+      stop("No provided standard errors Standard errors must be provided.")
     }
   # Check for negative standard errors
     if (any(se_j < 0)) {
       stop("Negative values found in se_j. Standard errors must be positive.")
     }
-  
-  # Check if both d_j and se_j are numeric vectors
-    if (!is.numeric(d_j) || !is.numeric(se_j)) {
-      stop("Both d_j and se_j must be numeric vectors.")
-    }
+   
+  # Check if whether d_j or se_j are numeric vectors
+     if (!is.numeric(d_j) || !is.numeric(se_j)) {
+        stop("Both d_j and se_j must be numeric vectors.")
+      }
   
   # Check that d_j and se_j are same length
     if (length(d_j) != length(se_j)) {
@@ -158,6 +171,15 @@ viz_MARC <- function(d_j = NULL,
       stop("Missing values detected in d_j or se_j. Please remove or impute missing values before plotting.")
     }
   }
+  }
+  
+  #Check if the summary effect sizes and standard errors are numbers 
+  if (!is.null(summary_es)&!is.null(summary_se)){
+   if (!is.numeric(summary_es) || !is.numeric(summary_se)) {
+      stop("Both the summary effect size and summary standard error must be numeric.")
+    }
+  }
+  
   if (!type %in% c("static", "interactive")) {
     stop("The 'type' argument must be either 'static' or 'interactive'.")
   }
@@ -172,15 +194,35 @@ viz_MARC <- function(d_j = NULL,
   if (!is.null(d_j)){
   MA_data <- data.frame(d_j)
     #if not method is specified, set method object to the default
-    if (!is.null(se_j)&is.null(method_obj)){ 
+  if(is.null(summary_es)||is.null(summary_se)||is.null(w_j)){
+   if (!is.null(se_j)&is.null(method_obj)){ 
+     if (is.null(w_j)){
       MA_data$se_j <- se_j
        method_obj = rma.uni(yi = MA_data$d_j,
                        sei = MA_data$se_j,
                        method = "FE")
+     }
+     else {
+       if(is.vector(w_j)){
+         MA_data$se_j <- se_j
+         method_obj = rma.uni(yi = MA_data$d_j,
+                              sei = MA_data$se_j,
+                              weights = w_j,
+                              method = "FE")
+       }
+       else if(is.matrix(w_j)){
+         MA_data$se_j <- se_j
+         V <- se_j^2
+         method_obj = rma.mv(yi = MA_data$d_j,
+                              V = V,
+                              W = w_j)
+       }
+     }
     }
     else if (is.null(se_j)&is.null(method_obj)){
       stop("Standard errors or metafor object are not provided")
     }
+  }
   }
   else if(is.null(d_j)&!is.null(method_obj)){
     if (!is.null(method_obj$yi)){
@@ -192,7 +234,8 @@ viz_MARC <- function(d_j = NULL,
     }
   }
   else{
-    stop("No effect sizes and standard errors or metafor object provided")
+    stop("No effect sizes and standard errors or summary effecs and standard errors
+         or metafor object provided.")
   }
   
   #specify # of studies k
@@ -207,8 +250,20 @@ viz_MARC <- function(d_j = NULL,
   
 
   #compute meta-analytic weights
-  
-  MA_data$w_j = weights(method_obj)
+  if (is.null(w_j)){
+  MA_data$w_j <- weights(method_obj)
+  }
+  else {
+    if(is.vector(w_j)){
+      MA_data$w_j <- w_j 
+    }
+    else if(is.matrix(w_j)){
+      MA_data$w_j <- diag(w_j)
+    }
+    else {
+      stop("Weights is neither a vector or matrix. Weights must be in vector or matrix form")
+    }
+  }
   
   MA_data <- MA_data %>%
     mutate(w_j_perc = w_j/sum(w_j))
@@ -219,9 +274,19 @@ viz_MARC <- function(d_j = NULL,
   max_abs_es <- max(abs(MA_data$d_j))
   
   #compute summary effect size - fixed effects model
+  if (is.null(summary_es)){
   summary_es <- as.numeric(method_obj$b)
+  }
+  else{
+    summary_es <- summary_es
+  }
   #compute summary standard error - fixed effects model
+  if (is.null(summary_se)){
   summary_se <- as.numeric(method_obj$se)
+  }
+  else{
+    summary_se <- summary_se
+  }
   
   # compute lower and upper bounds of confidence interval at specified level
   critical_value <- qnorm((1 - confidence_level)/2, lower.tail = FALSE)
