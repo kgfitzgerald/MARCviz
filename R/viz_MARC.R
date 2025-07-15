@@ -9,7 +9,7 @@
 #' @param w_j vector or matrix of user input weights for the effect size estimates
 #' @param method_obj metafor object used to fit the meta-analytic model, includes rma.uni(),rma(), rma.mh(),rma.peto(), rma.glmm() or rma.mv() (If not specified, rma.uni(yi=d_j,sei=se_j, method="FE") is used)
 #' @param summary_es user input meta-analytic summary effect size
-#' @param summary_se user input meta-analystic summeray standard error
+#' @param summary_se user input meta-analytic summary standard error
 #' @param type type of graph, "interactive" (built by plotly) or "static" (built by ggplot) (default = static)
 #' @param confidence_level confidence level for interval written in plot annotation (default = 0.95)
 #' @param summary_only TRUE/FALSE indicator for whether to display the summary effect ONLY (default = FALSE)
