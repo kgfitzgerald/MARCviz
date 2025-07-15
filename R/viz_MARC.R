@@ -147,30 +147,27 @@ viz_MARC <- function(d_j = NULL,
   if (is.null(method_obj)){
     #if summaries are not provided, check the following
     if(is.null(summary_es)||is.null(summary_se)||is.null(w_j)){
-    #Check for provided standard errors
-    if (is.null(se_j)){
-      stop("No provided standard errors Standard errors must be provided.")
-    }
-  # Check for negative standard errors
-    if (any(se_j < 0)) {
-      stop("Negative values found in se_j. Standard errors must be positive.")
-    }
-   
-  # Check if whether d_j or se_j are numeric vectors
-     if (!is.numeric(d_j) || !is.numeric(se_j)) {
-        stop("Both d_j and se_j must be numeric vectors.")
+     #Check for provided standard errors
+     if (is.null(se_j)){
+       stop("No provided standard errors Standard errors must be provided.")
+     }
+    # Check for negative standard errors
+     if (any(se_j < 0)) {
+       stop("Negative values found in se_j. Standard errors must be positive.")
+     }
+    # Check if whether d_j or se_j are numeric vectors
+       if (!is.numeric(d_j) || !is.numeric(se_j)) {
+          stop("Both d_j and se_j must be numeric vectors.")
+        }
+   # Check that d_j and se_j are same length
+      if (length(d_j) != length(se_j)) {
+        stop("d_j and se_j must be the same length.")
       }
-  
-  # Check that d_j and se_j are same length
-    if (length(d_j) != length(se_j)) {
-      stop("d_j and se_j must be the same length.")
-    }
-  
-  # Check for missing values
-    if (any(is.na(d_j)) || any(is.na(se_j))) {
-      stop("Missing values detected in d_j or se_j. Please remove or impute missing values before plotting.")
-    }
-  }
+    # Check for missing values
+      if (any(is.na(d_j)) || any(is.na(se_j))) {
+       stop("Missing values detected in d_j or se_j. Please remove or impute missing values before plotting.")
+     }
+   }
   }
   
   #Check if the summary effect sizes and standard errors are numbers 
@@ -241,7 +238,17 @@ viz_MARC <- function(d_j = NULL,
   #specify # of studies k
   #NOTE TO SELF: For future CRAN package, will need to update this to be flexible for
   #studies w/ multiple effect sizes
-  k <- dim(MA_data)[1]
+  if (is.null(study_labels)){
+    if(inherits(method_obj,"rma.mv")){
+      stop("It appears your meta-analysis may have dependecies but no study labels are provided.
+           Add study labels or adjust your meta-analysis method.")
+    }
+    k <- dim(MA_data)[1]
+  }
+  else {
+    k <- length(unique(study_labels))
+  }
+  
   stopifnot(k > 1)
   
   if (k < 2) {
