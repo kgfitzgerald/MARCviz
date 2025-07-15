@@ -110,7 +110,7 @@ viz_MARC <- function(d_j = NULL,
                      y_limits_rect = c(0.8,1.2),
                      width_in = 7,
                      height_in = 5,
-                     font_sizes = c(14, 10, 8, 9, 8, 7, 10),
+                     font_sizes = c(14, 10, 8, 9, 8, 7, 10, 16,16),
                      textbox_width = 4,
                      digits = 2,
                      max_dot_size = 10
@@ -636,9 +636,9 @@ viz_MARC <- function(d_j = NULL,
       ggplot2::theme_light(base_line_size = .1) +
       ggplot2::theme(axis.ticks.y = ggplot2::element_blank(),
                      axis.line = ggplot2::element_blank(),
-                     axis.text.x = ggplot2::element_text(size = 16),
-                     axis.text.y = ggplot2::element_text(size = 16),
-                     axis.title = ggplot2::element_text(size = 16),
+                     axis.text.x = ggplot2::element_text(size = font_sizes[7]),
+                     axis.text.y = ggplot2::element_text(size = font_sizes[8]),
+                     axis.title = ggplot2::element_text(size = font_sizes[7]),
                      panel.grid.minor.y = ggplot2::element_blank(),
                      legend.position = "none",
                      plot.caption = ggplot2::element_text(size = 10, face = "italic", color = "grey", hjust = 0)) +
@@ -851,7 +851,7 @@ viz_MARC <- function(d_j = NULL,
           axis.ticks.y = element_blank(),    # remove y-axis ticks
           panel.grid.major = element_blank(), # remove major grid lines
           panel.grid.minor = element_blank(),  # remove minor grid lines
-          axis.text.x = element_text(size = 12),
+          axis.text.x = element_text(size =12),
           axis.title=element_text(size = 12),
           plot.margin = margin(t = 20, r = 50, b = 20, l = 50)
         )
