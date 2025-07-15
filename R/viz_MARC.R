@@ -851,13 +851,9 @@ viz_MARC <- function(d_j = NULL,
           axis.ticks.y = element_blank(),    # remove y-axis ticks
           panel.grid.major = element_blank(), # remove major grid lines
           panel.grid.minor = element_blank(),  # remove minor grid lines
-<<<<<<< HEAD
+
           axis.text.x = element_text(size =12),
           axis.title=element_text(size = 12),
-=======
-          axis.text.x = element_text(size = font_sizes[7]),
-          axis.title=element_text(size = font_sizes[8]),
->>>>>>> eb8953f5c05ba8b59d3a8c67ac139100bde0a8cf
           plot.margin = margin(t = 20, r = 50, b = 20, l = 50)
         )
       p <- top
