@@ -110,7 +110,7 @@ viz_MARC <- function(d_j = NULL,
                      y_limits_rect = c(0.8,1.2),
                      width_in = 7,
                      height_in = 5,
-                     font_sizes = c(14, 10, 8, 9, 8, 7, 10, 16,16),
+                     font_sizes = c(14, 10, 8, 9, 8, 7, 10,12,12),
                      textbox_width = 4,
                      digits = 2,
                      max_dot_size = 10
@@ -851,8 +851,13 @@ viz_MARC <- function(d_j = NULL,
           axis.ticks.y = element_blank(),    # remove y-axis ticks
           panel.grid.major = element_blank(), # remove major grid lines
           panel.grid.minor = element_blank(),  # remove minor grid lines
+<<<<<<< HEAD
           axis.text.x = element_text(size =12),
           axis.title=element_text(size = 12),
+=======
+          axis.text.x = element_text(size = font_sizes[7]),
+          axis.title=element_text(size = font_sizes[8]),
+>>>>>>> eb8953f5c05ba8b59d3a8c67ac139100bde0a8cf
           plot.margin = margin(t = 20, r = 50, b = 20, l = 50)
         )
       p <- top
