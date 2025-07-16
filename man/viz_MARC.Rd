@@ -3,37 +3,28 @@
 \name{viz_MARC}
 \alias{viz_MARC}
 \title{viz_MARC}
-\usage{
-viz_MARC(
-  d_j = NULL,
-  se_j = NULL,
-  type = "interactive",
-  confidence_level = 0.95,
-  study_labels = NULL,
-  seed = NULL,
-  x_limits = NULL,
-  y_limits = NULL,
-  noise_height = 0.18,
-  n_dots_in_cloud = 250,
-  legend_data = NULL,
-  sizeref = NULL,
-  width = 650,
-  height = 425,
-  font_sizes = c(14, 10, 8, 9, 8, 7, 10),
-  digits = 2,
-  max_marker_size = 50
-)
-}
 \arguments{
 \item{d_j}{vector of effect size estimates}
 
 \item{se_j}{vector of standard errors of effect size estimates}
 
-\item{type}{type of graph, "interactive" (built by plotly) or "static" (built by ggplot)}
+\item{w_j}{vector or matrix of user input weights for the effect size estimates}
+
+\item{method_obj}{metafor object used to fit the meta-analytic model, includes rma.uni(),rma(), rma.mh(),rma.peto(), rma.glmm() or rma.mv() (If not specified, rma.uni(yi=d_j,sei=se_j, method="FE") is used)}
+
+\item{summary_es}{user input meta-analytic summary effect size}
+
+\item{summary_se}{user input meta-analytic summary standard error}
+
+\item{type}{type of graph, "interactive" (built by plotly) or "static" (built by ggplot) (default = static)}
 
 \item{confidence_level}{confidence level for interval written in plot annotation (default = 0.95)}
 
+\item{summary_only}{TRUE/FALSE indicator for whether to display the summary effect ONLY (default = FALSE)}
+
 \item{study_labels}{vector of study labels (optional)}
+
+\item{show_study_labels}{TRUE/FALSE indicator for whether to display study labels (default = FALSE)}
 
 \item{seed}{integer used to set random seed before randomizing rows (optional)}
 
@@ -41,23 +32,19 @@ viz_MARC(
 
 \item{y_limits}{vector of y-axis limits c(ymin, ymax) to be used in plotting (optional)}
 
-\item{noise_height}{controls how much the cloud of points varies vertically above/below y = 1 (default = 0.18, to stay within rectangle of height -/+0.2)}
+\item{y_limits_rect}{vector of y-axis limits c(ymin, ymax) to be used in plotting white rectangle (optional)}
 
-\item{n_dots_in_cloud}{number of random dots to generate for the cloud of points at top (default = 250)}
+\item{max_dot_size}{maximum dot size, used in ggplot static version (default = 10, reduce if summary too big)}
 
-\item{legend_data}{3x3 data.frame of vectors y, x, w_j_perc that give y-coordinates, x-coordinates, and weights to be plotted manually in the legend. Default is legend_data <- data.frame(y = c(ymax*.55, ymax*.45, ymax*.35), x = xmin*0.65, w_j_perc = c(.1, .01, .001))}
+\item{width_in}{desired width (in inches) for scaling purposes only}
 
-\item{sizeref}{controls plotly argument that scales dots. (default set by sizeref <- 2.0 / (max_marker_size**2) as recommended by https://plotly.com/r/bubble-charts/)}
+\item{height_in}{desired height (in inches) for scaling purposes only}
 
-\item{width}{controls figure width, passed to plot_ly() argument (default = 650)}
-
-\item{height}{controls figure height, passed to plot_ly() argument (default = 425)}
+\item{textbox_width}{controls width of textbox (default = 4 inches)}
 
 \item{font_sizes}{vector of 7 font sizes for annotations, in order: SUMMARY OF EVIDENCE, Average SMD & Weight, CI annotation, Increased/Decreased Scores, More/Less certain, Legend number labels, Legend Weight title (default = c(14, 10, 8, 9, 8, 7, 10))}
 
 \item{digits}{number of digits to round summary effect size and confidence interval bounds to (default = 2)}
-
-\item{max_marker_size}{maximum marker size, used in calculating sizeref if not specified separately (default = 50)}
 }
 \value{
 a plotly object (if type = "interactive") or ggplot object (if type = "static")
