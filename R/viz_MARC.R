@@ -23,7 +23,7 @@
 #' @param width_in desired width (in inches) for scaling purposes only
 #' @param height_in desired height (in inches) for scaling purposes only
 #' @param textbox_width controls width of textbox (default = 4 inches)
-#' @param font_sizes vector of 9 font sizes for annotations, in order: SUMMARY OF EVIDENCE, Average SMD & Weight, CI annotation, Increased/Decreased Scores, More/Less certain, Legend number labels, Legend Weight title, Y-axis label, X-axis label (default = c(14, 10, 8, 9, 8, 7, 10,16,16))
+#' @param font_sizes vector of 9 font sizes for annotations, in order: SUMMARY OF EVIDENCE, Average SMD & Weight, CI annotation, Increased/Decreased Scores, More/Less certain, Legend number labels, Legend Weight title, X-axis label, Y-axis label (default = c(14, 10, 8, 9, 8, 7, 10,16,16))
 #' @param digits number of digits to round summary effect size and confidence interval bounds to (default = 2)
 #' @param xinc controls the x axis increments for the standardized mean differences (default = .2)
 #'
@@ -151,7 +151,7 @@ viz_MARC <- function(d_j = NULL,
     if(is.null(summary_es)||is.null(summary_se)||is.null(w_j)){
      #Check for provided standard errors
      if (is.null(se_j)){
-       stop("No provided standard errors Standard errors must be provided.")
+       stop("No provided standard errors. Standard errors must be provided.")
      }
     # Check for negative standard errors
      if (any(se_j < 0)) {
@@ -169,16 +169,23 @@ viz_MARC <- function(d_j = NULL,
       if (any(is.na(d_j)) || any(is.na(se_j))) {
        stop("Missing values detected in d_j or se_j. Please remove or impute missing values before plotting.")
      }
-   }
+    }
   }
+
   
-  #Check if the summary effect sizes and standard errors are numbers 
+  #Check if the summary effect sizes, summary standard errors, and weights are numbers 
   if (!is.null(summary_es)&!is.null(summary_se)){
    if (!is.numeric(summary_es) || !is.numeric(summary_se)) {
       stop("Both the summary effect size and summary standard error must be numeric.")
+   }
+    if (!is.null(w_j)){
+      #check that w_j is a numeric vector or matrix 
+      if(!is.numeric(w_j)){
+        stop("Weights must be a numeric vector or matrix.")
+      }
     }
   }
-  
+  #Check type is "static" or "interactive"
   if (!type %in% c("static", "interactive")) {
     stop("The 'type' argument must be either 'static' or 'interactive'.")
   }
@@ -187,6 +194,48 @@ viz_MARC <- function(d_j = NULL,
   if (!is.numeric(confidence_level) || confidence_level <= 0 || confidence_level >= 1) {
     stop("confidence_level must be a numeric value between 0 and 1.")
   }
+  
+  #Check that study_labels is equal to the len of the effect sizes or method_object
+  if (!is.null(study_labels)){
+    if(!is.null(d_j)){
+      if (length(d_j) != length(study_labels)) {
+        stop("d_j and study_labels must be the same length.")
+      }
+    }
+    else if(!is.null(method_obj)){
+      if (length(method_obj$yi) != length(study_labels)) {
+        stop("method_object effect sizes and study_labels must be the same length.")
+      }
+    }
+  }
+  
+  #Check that summary_only is True of False 
+  if (!summary_only %in% c(TRUE, FALSE)) {
+    stop("The 'summary_only' argument must be either 'TRUE' or 'FALSE'.")
+  }
+  
+  #Check that show_study_labels is True of False 
+  if (!show_study_labels %in% c(TRUE, FALSE)) {
+    stop("The 'show_study_labels' argument must be either 'TRUE' or 'FALSE'.")
+  }
+  
+  #Check x_limits, y_limits, and y_limits_rect are a numerica vector of length 2
+  lim <- c(x_limits,y_limits, y_limits_rect)
+  lim_name <- c("x_limits","y_limits","y_limits_rect")
+  i=1
+  for (l in lim){
+    i=i+1
+    print(i)
+    if(!is.null(l)){
+     if (length(l)!=2){
+       stop("The ",lim_name[i] , "  arguments must be a vector with length 2.")
+      }
+     if (!is.numeric(l)){
+        stop("The ", lim_name[i]," arguments must be numeric.")
+     }
+    }
+  }
+  
   
   #------ create MA_data from d_j inputs -------
   # create MA_data from d_j inputs if provided
@@ -638,9 +687,9 @@ viz_MARC <- function(d_j = NULL,
       ggplot2::theme_light(base_line_size = .1) +
       ggplot2::theme(axis.ticks.y = ggplot2::element_blank(),
                      axis.line = ggplot2::element_blank(),
-                     axis.text.x = ggplot2::element_text(size = font_sizes[7]),
-                     axis.text.y = ggplot2::element_text(size = font_sizes[8]),
-                     axis.title = ggplot2::element_text(size = font_sizes[7]),
+                     axis.text.x = ggplot2::element_text(size = font_sizes[8]),
+                     axis.text.y = ggplot2::element_text(size = font_sizes[9]),
+                     axis.title = ggplot2::element_text(size = font_sizes[8]),
                      panel.grid.minor.y = ggplot2::element_blank(),
                      legend.position = "none",
                      plot.caption = ggplot2::element_text(size = 10, face = "italic", color = "grey", hjust = 0)) +
