@@ -23,7 +23,7 @@
 #' @param width_in desired width (in inches) for scaling purposes only
 #' @param height_in desired height (in inches) for scaling purposes only
 #' @param textbox_width controls width of textbox (default = 4 inches)
-#' @param font_sizes vector of 7 font sizes for annotations, in order: SUMMARY OF EVIDENCE, Average SMD & Weight, CI annotation, Increased/Decreased Scores, More/Less certain, Legend number labels, Legend Weight title (default = c(14, 10, 8, 9, 8, 7, 10))
+#' @param font_sizes vector of 9 font sizes for annotations, in order: SUMMARY OF EVIDENCE, Average SMD & Weight, CI annotation, Increased/Decreased Scores, More/Less certain, Legend number labels, Legend Weight title, Y-axis label, X-axis label (default = c(14, 10, 8, 9, 8, 7, 10,16,16))
 #' @param digits number of digits to round summary effect size and confidence interval bounds to (default = 2)
 #'
 #' @return a plotly object (if type = "interactive") or ggplot object (if type = "static")
