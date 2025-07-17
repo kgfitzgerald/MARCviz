@@ -42,9 +42,11 @@
 
 \item{textbox_width}{controls width of textbox (default = 4 inches)}
 
-\item{font_sizes}{vector of 7 font sizes for annotations, in order: SUMMARY OF EVIDENCE, Average SMD & Weight, CI annotation, Increased/Decreased Scores, More/Less certain, Legend number labels, Legend Weight title (default = c(14, 10, 8, 9, 8, 7, 10))}
+\item{font_sizes}{vector of 9 font sizes for annotations, in order: SUMMARY OF EVIDENCE, Average SMD & Weight, CI annotation, Increased/Decreased Scores, More/Less certain, Legend number labels, Legend Weight title, Y-axis label, X-axis label (default = c(14, 10, 8, 9, 8, 7, 10,16,16))}
 
 \item{digits}{number of digits to round summary effect size and confidence interval bounds to (default = 2)}
+
+\item{xinc}{controls the x axis increments for the standardized mean differences (default = .2)}
 }
 \value{
 a plotly object (if type = "interactive") or ggplot object (if type = "static")
