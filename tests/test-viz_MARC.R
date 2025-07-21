@@ -1,6 +1,8 @@
 # test-viz_MARC.R
 
 # Load required libraries
+library(devtools)
+devtools::install_github("kgfitzgerald/MARCviz")
 library(testthat)
 library(MARCviz)
 library(metafor)
@@ -52,6 +54,17 @@ test_that("viz_MARC works within tidyverse pipelines", {
 # Test 4: Error checks
 
 test_that("viz_MARC throws errors for invalid inputs", {
+  #Missing Effect sizes 
+  expect_error(
+    viz_MARC(se_j = c(0.1, 0.05)),
+    "Missing Effect sizes or metafor object. 
+         Effect sizes or metafor object must be provided."
+  )
+  #Missing standard errors
+  expect_error(
+    viz_MARC(d_j = c(0.2, 0.3)),
+    "No provided standard errors. Standard errors must be provided."
+  )
   # negative standard errors
   expect_error(
     viz_MARC(d_j = c(0.2, 0.3), se_j = c(0.1, -0.05)),
@@ -72,6 +85,65 @@ test_that("viz_MARC throws errors for invalid inputs", {
     viz_MARC(d_j = c(0.2, NA), se_j = c(0.1, 0.2)),
     "Missing values detected in d_j or se_j"
   )
+  #Invalid summary effect sizes 
+  expect_error(
+    viz_MARC(d_j = c(0.2, 0.3),summary_es="c",summary_se=.05,w_j=c(.02,.03)),
+    "Both the summary effect size and summary standard error must be numeric."
+  )
+  #Invalid weight matrix
+  expect_error(
+    viz_MARC(d_j = c(0.2, 0.3),summary_es=.2,summary_se=.05,w_j=c("a","b")),
+    "Weights must be a numeric vector or matrix."
+  )
+  #lengths of d_j and study_labels not matching
+  expect_error(
+    viz_MARC(d_j = c(0.2, 0.3),summary_es=.2,summary_se=.05,w_j=c(.02,.03),study_labels=c("a","b","c")),
+    "d_j and study_labels must be the same length."
+  )
+  dat <- data.frame(
+    yi = c(0.2, -0.1, 0.3),
+    sei = c(0.05, 0.06, 0.07)
+  )
+  # fit metafor model using data columns directly
+  res <- metafor::rma.uni(yi = dat$yi, sei = dat$sei)
+  expect_error(
+    viz_MARC(res,study_labels=c("a","b")),
+    "method_object effect sizes and study_labels must be the same length."
+  )
+  
+  # invalid summary_only arguemnt
+  expect_error(
+    viz_MARC(d_j = c(0.2, 0.3), se_j = c(0.1, 0.2), summary_only = "wrong"),
+    "The 'summary_only' argument must be either 'TRUE' or 'FALSE'."
+  )
+  
+  #invalid show_study_labels argument
+  expect_error(
+    viz_MARC(d_j = c(0.2, 0.3), se_j = c(0.1, 0.2), show_study_labels = "wrong"),
+    "The 'show_study_labels' argument must be either 'TRUE' or 'FALSE'."
+  )
+  
+  #invalid x_limits argument
+  expect_error(
+    viz_MARC(d_j = c(0.2, 0.3), se_j = c(0.1, 0.2), x_limits=c(5,3,4)),
+    "The x_limits arguments must be a vector with length 2."
+  )
+  expect_error(
+    viz_MARC(d_j = c(0.2, 0.3), se_j = c(0.1, 0.2), x_limits=c("a","b")),
+    "The x_limits arguments must be numeric."
+  )
+  #invalid max_dot_size argument
+  expect_error(
+    viz_MARC(d_j = c(0.2, 0.3), se_j = c(0.1, 0.2), font_sizes = c(14, 10, 8, 9, 8, 7, 10,12)),
+    "Font sizes must be a numeric vector with 9 sizes."
+  )
+  
+  #invalid font size argument
+  expect_error(
+    viz_MARC(d_j = c(0.2, 0.3), se_j = c(0.1, 0.2), max_dot_size=c("a","b")),
+    "The max_dot_size must be a single numeric value."
+  )
+  
   # invalid 'type' argument
   expect_error(
     viz_MARC(d_j = c(0.2, 0.3), se_j = c(0.1, 0.2), type = "wrong"),

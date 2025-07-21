@@ -226,7 +226,7 @@ viz_MARC <- function(d_j = NULL,
   for (l in lim){
     if(!is.null(l)){
      if (length(l)!=2){
-       stop("The ",lim_name[i] , "  arguments must be a vector with length 2.")
+       stop("The ",lim_name[i], " arguments must be a vector with length 2.")
       }
      if (!is.numeric(l)){
         stop("The ", lim_name[i]," arguments must be numeric.")
@@ -241,7 +241,7 @@ viz_MARC <- function(d_j = NULL,
   i=1
   for (l in lim){
     if (length(l)!=1||!is.numeric(l)){
-      stop("The ",lim_name[i] , "must be a single numeric value.")
+      stop("The ",lim_name[i] , " must be a single numeric value.")
     }
     i=i+1
   }
