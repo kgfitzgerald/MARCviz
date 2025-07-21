@@ -220,12 +220,10 @@ viz_MARC <- function(d_j = NULL,
   }
   
   #Check x_limits, y_limits, and y_limits_rect are a numerica vector of length 2
-  lim <- c(x_limits,y_limits, y_limits_rect)
+  lim <- list(x_limits,y_limits, y_limits_rect)
   lim_name <- c("x_limits","y_limits","y_limits_rect")
   i=1
   for (l in lim){
-    i=i+1
-    print(i)
     if(!is.null(l)){
      if (length(l)!=2){
        stop("The ",lim_name[i] , "  arguments must be a vector with length 2.")
@@ -234,8 +232,23 @@ viz_MARC <- function(d_j = NULL,
         stop("The ", lim_name[i]," arguments must be numeric.")
      }
     }
+    i=i+1
   }
   
+  #Check that max_dot_size, width_in, height_in, textbox_width, and digits are all a single numeric value
+  lim <- list(max_dot_size,width_in, height_in, textbox_width, digits,xinc)
+  lim_name <- c("max_dot_size","width_in", "height_in", "textbox_width", "digits","xinc")
+  i=1
+  for (l in lim){
+    if (length(l)!=1||!is.numeric(l)){
+      stop("The ",lim_name[i] , "must be a single numeric value.")
+    }
+    i=i+1
+  }
+  
+  if (length(font_sizes)!=9||!is.numeric(font_sizes)){
+    stop("Font sizes must be a numeric vector with 9 sizes.")
+  }
   
   #------ create MA_data from d_j inputs -------
   # create MA_data from d_j inputs if provided
