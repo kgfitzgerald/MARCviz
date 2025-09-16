@@ -3,11 +3,11 @@ Package: MARCviz
 Title: Meta-Analytic Rain Cloud (MARC) Plots
 Version: 0.1.0
 Authors@R: c(
-    person("Kaitlyn", "Fitzgerald", email = "kfitzgerald@apu.edu", role = c("cre","aut")),
+    person("Kaitlyn", "Fitzgerald", email = "kaitlyn.fitzgerald@villanova.edu", role = c("cre","aut")),
     person("Avery", "Charles", email = "acharles20@apu.edu", role = "aut"),
     person("David", "Khella", email = "dkhella20@apu.edu", role = "ctb"))
     person("Lydia","Bradford",email="lydia.bradford@northwestern.edu",role="ctb")
-Maintainer: Kaitlyn Fitzgerald <kfitzgerald@apu.edu>
+Maintainer: Kaitlyn Fitzgerald <kaitlyn.fitzgerald@villanova.edu>
 Description: This package produces a Meta-Analytic Rain Cloud (MARC) Plot.
     The MARC plot displays the relative weight of each study while providing a summary effect on its own plane.
     This plot utilizes the y axis for weight and the x axis for standardized mean difference (SMD).
