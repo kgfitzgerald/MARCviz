@@ -249,9 +249,11 @@ viz_MARC <- function(d_j = NULL,
     i=i+1
   }
   
-  #Check that max_dot_size, width_in, height_in, textbox_width, and digits are all a single numeric value
-  lim <- list(max_dot_size,width_in, height_in, textbox_width, digits,xinc)
-  lim_name <- c("max_dot_size","width_in", "height_in", "textbox_width", "digits","xinc")
+  #Check that max_dot_size, width_in, height_in, textbox_width, digits, and dot_trans are all a single numeric value
+  lim <- list(max_dot_size,width_in, height_in, textbox_width, digits,
+              xinc,dot_trans)
+  lim_name <- c("max_dot_size","width_in", "height_in", "textbox_width", "digits",
+                "xinc","dot_trans")
   i=1
   for (l in lim){
     if (length(l)!=1||!is.numeric(l)){
@@ -262,6 +264,16 @@ viz_MARC <- function(d_j = NULL,
   
   if (length(font_sizes)!=9||!is.numeric(font_sizes)){
     stop("Font sizes must be a numeric vector with 9 sizes.")
+  }
+  
+  # Check that the dot_color passed through and font_type are string types
+  
+  if (!is.character(dot_color)){
+    stop("Dot color must be a string.")
+  }
+  if (!is.character(font_type)){
+    stop("font_type must be in the format of a string with 
+         the font type's given name")
   }
   
   #------ create MA_data from d_j inputs -------
