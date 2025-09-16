@@ -6,6 +6,7 @@ Authors@R: c(
     person("Kaitlyn", "Fitzgerald", email = "kfitzgerald@apu.edu", role = c("cre","aut")),
     person("Avery", "Charles", email = "acharles20@apu.edu", role = "aut"),
     person("David", "Khella", email = "dkhella20@apu.edu", role = "ctb"))
+    person("Lydia","Bradford",email="lydia.bradford@northwestern.edu",role="ctb")
 Maintainer: Kaitlyn Fitzgerald <kfitzgerald@apu.edu>
 Description: This package produces a Meta-Analytic Rain Cloud (MARC) Plot.
     The MARC plot displays the relative weight of each study while providing a summary effect on its own plane.
