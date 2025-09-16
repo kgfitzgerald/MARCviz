@@ -28,6 +28,7 @@
 #' @param xinc controls the x axis increments for the standardized mean differences (default = .2)
 #' @param dot_color controls the color of the effect size dots using ggplot colors (default=navyblue)
 #' @param dot_trans controls the transparency of the effect size dots on a scacle of 0 to 1 (default = .5)
+#' @param font_type controls the font type for the text (default = "")
 #'
 #' @return a plotly object (if type = "interactive") or ggplot object (if type = "static")
 #' @examples
@@ -119,7 +120,8 @@ viz_MARC <- function(d_j = NULL,
                      xinc=.2,
                      max_dot_size = 10,
                      dot_color = "navyblue",
-                     dot_trans = .5
+                     dot_trans = .5,
+                     font_type = ""
 ){
   
   #If metafor object is passed through first: 
@@ -709,7 +711,7 @@ viz_MARC <- function(d_j = NULL,
     ##### CREATE PLOT BASE ######
     base <- ggplot2::ggplot(MA_data) +
       # remove axes and superfluous grids
-      ggplot2::theme_light(base_line_size = .1) +
+      ggplot2::theme_light(base_family=font_type,base_line_size = .1) +
       ggplot2::theme(axis.ticks.y = ggplot2::element_blank(),
                      axis.line = ggplot2::element_blank(),
                      axis.text.x = ggplot2::element_text(size = font_sizes[8]),
@@ -729,14 +731,14 @@ viz_MARC <- function(d_j = NULL,
     bottom <- base +
       # create labels to aid in interpretation of x-axis (SMD)
       ggplot2::annotate("label", label = "Decreased scores (SMD < 0)",
-                        x = xmin*0.5, y = -ymax*.05, size = font_sizes[4]*5/14) +
+                        x = xmin*0.5, y = -ymax*.05, size = font_sizes[4]*5/14,family=font_type) +
       ggplot2::annotate("label", label = "Increased scores (SMD > 0)",
-                        x = xmax*.5, y = -ymax*0.05, size = font_sizes[4]*5/14) +
+                        x = xmax*.5, y = -ymax*0.05, size = font_sizes[4]*5/14,family=font_type) +
       # add annotation to aid in interpretation of y-axis (meta-analytic weight)
       ggplot2::annotate("text", label = "More certain",
-                        x = xmin*.85, y = ymax*.65, alpha = 0.5, size = font_sizes[5]*5/14) +
+                        x = xmin*.85, y = ymax*.65, alpha = 0.5, size = font_sizes[5]*5/14,family=font_type) +
       ggplot2::annotate("text", label = "Less certain",
-                        x = xmin*.85, y = ymax*.35, alpha = 0.5, size = font_sizes[5]*5/14) +
+                        x = xmin*.85, y = ymax*.35, alpha = 0.5, size = font_sizes[5]*5/14,family=font_type) +
       ggplot2::annotate("segment", x = xmin*.85, xend = xmin*.85,
                         y = ymax*.6, yend = ymax*.4, alpha = 0.4,
                         arrow = ggplot2::arrow(length = grid::unit(2, "mm"),
@@ -820,12 +822,12 @@ viz_MARC <- function(d_j = NULL,
                           label = paste("Average SMD: ", 
                                         round(summary_es, digits),
                                         "\n# of Studies: ", k),
-                          hjust = 0, size = font_sizes[2]*5/14) +
+                          hjust = 0, size = font_sizes[2]*5/14,family=font_type) +
         # add SUMMARY OF THE EVIDENCE annotation
         ggplot2::annotate("text", x = x_limits[1], 
                           y = y_limits_rect[2]*1.1, hjust = 0,
                           label = paste0("SUMMARY OF THE EVIDENCE:"),
-                          size = font_sizes[1]*5/14) +
+                          size = font_sizes[1]*5/14,family=font_type) +
         
         stat_dots(
           data = tibble::tibble(
@@ -837,7 +839,7 @@ viz_MARC <- function(d_j = NULL,
         # add the navy blue summary dot
         ggplot2::geom_point(data = summary_data, 
                             ggplot2::aes(x = d_j, y = 1), size = 5,
-                            color = "navyblue") +
+                            color = dot_color) +
         # add the explanatory annotation for interpreting the summary
         geom_textbox(x = summary_data$d_j, y = y_limits_rect[1]*.96, 
                      label = paste0("Based on the existing evidence, 
@@ -851,6 +853,7 @@ viz_MARC <- function(d_j = NULL,
                                         any of the individual estimates below."),
                      alpha = 0.5,
                      size = font_sizes[3] * 5 / 14, 
+                     family=font_type,
                      vjust = 1,
                      box.color = NA, 
                      fill = "white", 
@@ -865,7 +868,7 @@ viz_MARC <- function(d_j = NULL,
     } else{
       top <- ggplot(MA_data) +
         # remove axes and superfluous grids
-        theme_light(base_line_size = .1) +
+        theme_light(base_line_size = .1,base_family=font_type) +
         #create red/blue shading to distinguish negative/positive SMD regions
         geom_vline(xintercept = 0, alpha = 0.3) +
         ggplot2::annotate("rect", xmin = -Inf, xmax = 0, ymin = -Inf, ymax = Inf,
@@ -891,7 +894,7 @@ viz_MARC <- function(d_j = NULL,
         # add the navy blue summary dot
         ggplot2::geom_point(data = summary_data, 
                             ggplot2::aes(x = d_j, y = 1), size = 5,
-                            color = "navyblue") + 
+                            color = dot_color) + 
         # add the explanatory annotation for interpreting the summary
         geom_textbox(x = summary_data$d_j, y = y_limits_rect[2]*1.25, 
                      #x = 0.05, y = y_limits_rect[2]*1.1,
