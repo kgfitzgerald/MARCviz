@@ -26,6 +26,8 @@
 #' @param font_sizes vector of 9 font sizes for annotations, in order: SUMMARY OF EVIDENCE, Average SMD & Weight, CI annotation, Increased/Decreased Scores, More/Less certain, Legend number labels, Legend Weight title, X-axis label, Y-axis label (default = c(14, 10, 8, 9, 8, 7, 10,16,16))
 #' @param digits number of digits to round summary effect size and confidence interval bounds to (default = 2)
 #' @param xinc controls the x axis increments for the standardized mean differences (default = .2)
+#' @param dot_color controls the color of the effect size dots using ggplot colors (default=navyblue)
+#' @param dot_trans controls the transparency of the effect size dots on a scacle of 0 to 1 (default = .5)
 #'
 #' @return a plotly object (if type = "interactive") or ggplot object (if type = "static")
 #' @examples
@@ -115,9 +117,11 @@ viz_MARC <- function(d_j = NULL,
                      textbox_width = 4,
                      digits = 2,
                      xinc=.2,
-                     max_dot_size = 10
+                     max_dot_size = 10,
+                     dot_color = "navyblue",
+                     dot_trans = .5
 ){
-
+  
   #If metafor object is passed through first: 
   if (inherits(d_j,c("rma","rma.uni","rma.mh","rma.peto","rma.glmm","rma.mv"))){
     method_obj = d_j
@@ -133,51 +137,59 @@ viz_MARC <- function(d_j = NULL,
     method_obj = w_j
     w_j = NULL
   }
+  
+  if (!is.null(method_obj)){
+    if(!inherits(method_obj, c("rma","rma.uni","rma.mh","rma.peto","rma.glmm","rma.mv"))){
+      stop("Method_obj must be a metafor object.")
+    }
+  }
+  
+  
   # for tidyverse 
   #  we are using dplyr functions
   #  and using ggplot2
   
   #---------------- Error messages -----------------------------
-
+  
   # Check that either effect sizes and standard errors are provided or a metafor object
   if(is.null(method_obj)& (is.null(d_j))){
     stop("Missing Effect sizes or metafor object. 
          Effect sizes or metafor object must be provided.")
   }
   
-   # If metafor object is not provided, check the following
+  # If metafor object is not provided, check the following
   if (is.null(method_obj)){
     #if summaries are not provided, check the following
     if(is.null(summary_es)||is.null(summary_se)||is.null(w_j)){
-     #Check for provided standard errors
-     if (is.null(se_j)){
-       stop("No provided standard errors. Standard errors must be provided.")
-     }
-    # Check for negative standard errors
-     if (any(se_j < 0)) {
-       stop("Negative values found in se_j. Standard errors must be positive.")
-     }
-    # Check if whether d_j or se_j are numeric vectors
-       if (!is.numeric(d_j) || !is.numeric(se_j)) {
-          stop("Both d_j and se_j must be numeric vectors.")
-        }
-   # Check that d_j and se_j are same length
+      #Check for provided standard errors
+      if (is.null(se_j)){
+        stop("No provided standard errors. Standard errors must be provided.")
+      }
+      # Check for negative standard errors
+      if (any(se_j < 0)) {
+        stop("Negative values found in se_j. Standard errors must be positive.")
+      }
+      # Check if whether d_j or se_j are numeric vectors
+      if (!is.numeric(d_j) || !is.numeric(se_j)) {
+        stop("Both d_j and se_j must be numeric vectors.")
+      }
+      # Check that d_j and se_j are same length
       if (length(d_j) != length(se_j)) {
         stop("d_j and se_j must be the same length.")
       }
-    # Check for missing values
+      # Check for missing values
       if (any(is.na(d_j)) || any(is.na(se_j))) {
-       stop("Missing values detected in d_j or se_j. Please remove or impute missing values before plotting.")
-     }
+        stop("Missing values detected in d_j or se_j. Please remove or impute missing values before plotting.")
+      }
     }
   }
-
+  
   
   #Check if the summary effect sizes, summary standard errors, and weights are numbers 
   if (!is.null(summary_es)&!is.null(summary_se)){
-   if (!is.numeric(summary_es) || !is.numeric(summary_se)) {
+    if (!is.numeric(summary_es) || !is.numeric(summary_se)) {
       stop("Both the summary effect size and summary standard error must be numeric.")
-   }
+    }
     if (!is.null(w_j)){
       #check that w_j is a numeric vector or matrix 
       if(!is.numeric(w_j)){
@@ -225,12 +237,12 @@ viz_MARC <- function(d_j = NULL,
   i=1
   for (l in lim){
     if(!is.null(l)){
-     if (length(l)!=2){
-       stop("The ",lim_name[i], " arguments must be a vector with length 2.")
+      if (length(l)!=2){
+        stop("The ",lim_name[i], " arguments must be a vector with length 2.")
       }
-     if (!is.numeric(l)){
+      if (!is.numeric(l)){
         stop("The ", lim_name[i]," arguments must be numeric.")
-     }
+      }
     }
     i=i+1
   }
@@ -253,42 +265,42 @@ viz_MARC <- function(d_j = NULL,
   #------ create MA_data from d_j inputs -------
   # create MA_data from d_j inputs if provided
   if (!is.null(d_j)){
-  MA_data <- data.frame(d_j)
+    MA_data <- data.frame(d_j)
     #if not method is specified, set method object to the default
-  if(is.null(summary_es)||is.null(summary_se)||is.null(w_j)){
-   if (!is.null(se_j)&is.null(method_obj)){ 
-     if (is.null(w_j)){
-      MA_data$se_j <- se_j
-       method_obj = rma.uni(yi = MA_data$d_j,
-                       sei = MA_data$se_j,
-                       method = "FE")
-     }
-     else {
-       if(is.vector(w_j)){
-         MA_data$se_j <- se_j
-         method_obj = rma.uni(yi = MA_data$d_j,
-                              sei = MA_data$se_j,
-                              weights = w_j,
-                              method = "FE")
-       }
-       else if(is.matrix(w_j)){
-         MA_data$se_j <- se_j
-         V <- se_j^2
-         method_obj = rma.mv(yi = MA_data$d_j,
-                              V = V,
-                              W = w_j)
-       }
-     }
+    if(is.null(summary_es)||is.null(summary_se)||is.null(w_j)){
+      if (!is.null(se_j)&is.null(method_obj)){ 
+        if (is.null(w_j)){
+          MA_data$se_j <- se_j
+          method_obj = rma.uni(yi = MA_data$d_j,
+                               sei = MA_data$se_j,
+                               method = "FE")
+        }
+        else {
+          if(is.vector(w_j)){
+            MA_data$se_j <- se_j
+            method_obj = rma.uni(yi = MA_data$d_j,
+                                 sei = MA_data$se_j,
+                                 weights = w_j,
+                                 method = "FE")
+          }
+          else if(is.matrix(w_j)){
+            MA_data$se_j <- se_j
+            V <- se_j^2
+            method_obj = rma.mv(yi = MA_data$d_j,
+                                V = V,
+                                W = w_j)
+          }
+        }
+      }
+      else if (is.null(se_j)&is.null(method_obj)){
+        stop("Standard errors or metafor object are not provided")
+      }
     }
-    else if (is.null(se_j)&is.null(method_obj)){
-      stop("Standard errors or metafor object are not provided")
-    }
-  }
   }
   else if(is.null(d_j)&!is.null(method_obj)){
     if (!is.null(method_obj$yi)){
       d_j <- as.numeric(method_obj$yi)
-    MA_data <-data.frame(d_j)
+      MA_data <-data.frame(d_j)
     }
     else{
       stop("Metfor object does not include effect sizes/outcome")
@@ -319,10 +331,10 @@ viz_MARC <- function(d_j = NULL,
     stop("At least two studies are required to produce a meta-analytic plot.")
   }
   
-
+  
   #compute meta-analytic weights
   if (is.null(w_j)){
-  MA_data$w_j <- weights(method_obj)
+    MA_data$w_j <- weights(method_obj)
   }
   else {
     if(is.vector(w_j)){
@@ -346,14 +358,14 @@ viz_MARC <- function(d_j = NULL,
   
   #compute summary effect size - fixed effects model
   if (is.null(summary_es)){
-  summary_es <- as.numeric(method_obj$b)
+    summary_es <- as.numeric(method_obj$b)
   }
   else{
     summary_es <- summary_es
   }
   #compute summary standard error - fixed effects model
   if (is.null(summary_se)){
-  summary_se <- as.numeric(method_obj$se)
+    summary_se <- as.numeric(method_obj$se)
   }
   else{
     summary_se <- summary_se
@@ -731,7 +743,7 @@ viz_MARC <- function(d_j = NULL,
                                                type = "closed", ends = "both")) +
       # add effect size dots
       ggplot2::geom_point(data = MA_data, ggplot2::aes(x = d_j, y = w_j_perc, size = w_j_perc),
-                          color = "navyblue") +
+                          color = dot_color,alpha=dot_trans) +
       # horizontal line to make x-axis more prominent
       ggplot2::geom_hline(yintercept = 0) +
       # set maximum dot size for effect size dots
@@ -915,7 +927,7 @@ viz_MARC <- function(d_j = NULL,
           axis.ticks.y = element_blank(),    # remove y-axis ticks
           panel.grid.major = element_blank(), # remove major grid lines
           panel.grid.minor = element_blank(),  # remove minor grid lines
-
+          
           axis.text.x = element_text(size =12),
           axis.title=element_text(size = 12),
           plot.margin = margin(t = 20, r = 50, b = 20, l = 50)
