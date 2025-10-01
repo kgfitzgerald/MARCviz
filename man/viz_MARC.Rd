@@ -16,8 +16,6 @@
 
 \item{summary_se}{user input meta-analytic summary standard error}
 
-\item{type}{type of graph, "interactive" (built by plotly) or "static" (built by ggplot) (default = static)}
-
 \item{confidence_level}{confidence level for interval written in plot annotation (default = 0.95)}
 
 \item{summary_only}{TRUE/FALSE indicator for whether to display the summary effect ONLY (default = FALSE)}
@@ -55,10 +53,10 @@
 \item{font_type}{controls the font type for the text (default = "")}
 }
 \value{
-a plotly object (if type = "interactive") or ggplot object (if type = "static")
+a ggplot object
 }
 \description{
-Produces an interactive Meta-Analytic Rain Cloud (MARC) plot
+Produces an static Meta-Analytic Rain Cloud (MARC) plot
 }
 \examples{
 library(tidyverse)

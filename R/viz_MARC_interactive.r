@@ -1,4 +1,4 @@
-#' @title viz_MARC
+#' @title viz_MARC_interactive
 #'
 #' @description Produces an interactive Meta-Analytic Rain Cloud (MARC) plot
 #'

@@ -126,23 +126,23 @@ viz_MARC <- function(d_j = NULL,
   if (inherits(d_j,c("rma","rma.uni","rma.mh","rma.peto","rma.glmm","rma.mv"))){
     method_obj = d_j
     d_j = NULL
-  }
+    }
   #If metafor object is passed through second: 
   if (inherits(se_j,c("rma","rma.uni","rma.mh","rma.peto","rma.glmm","rma.mv"))){
     method_obj = se_j
     se_j = NULL
-  }
+    }
   #If metafor object is passed through third: 
   if (inherits(w_j,c("rma","rma.uni","rma.mh","rma.peto","rma.glmm","rma.mv"))){
     method_obj = w_j
     w_j = NULL
-  }
+    }
   
   if (!is.null(method_obj)){
     if(!inherits(method_obj, c("rma","rma.uni","rma.mh","rma.peto","rma.glmm","rma.mv"))){
       stop("Method_obj must be a metafor object.")
+      }
     }
-  }
   
   
   # for tidyverse 
