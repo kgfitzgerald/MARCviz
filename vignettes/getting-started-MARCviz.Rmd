@@ -1,0 +1,148 @@
+---
+title: "Getting Started with MARCviz"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with MARCviz}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+
+library(MARCviz)
+library(dplyr)
+library(ggtext)
+```
+
+## Overview
+
+The **MARCviz** package implements the Meta-Analytic Rain Cloud (MARC) plot from Fitzgerald & Tipton (2022), a visualization tool designed to help non-technical users understand meta-analytic results.
+
+It focuses on:
+
+-   Emphasizing **precise** studies over imprecise ones
+-   Emphasizing the **summary effect** over individual studies
+-   Showing the **magnitude** and **uncertainty** of the summary effect in an intuitive way
+
+This vignette walks you through:
+
+1.  Installing **MARCviz**
+2.  Loading the example data
+3.  Creating your first MARC plot
+4.  Using a **metafor** model object
+
+## 1. Installing **MARCviz**
+
+If you haven’t already installed the package, you can install it from GitHub:
+
+```{r install, eval = FALSE}
+# install.packages("devtools")
+devtools::install_github("kgfitzgerald/MARCviz")
+```
+
+Then load the package:
+
+```{r load-package, eval = FALSE}
+library(MARCviz)
+```
+
+## 2. Loading the example data
+
+**MARCviz** comes with an example meta-analytic dataset called `viz_MA_data`. We’ll use the subset where `k == 50`:
+
+```{r load-data}
+data(viz_MA_data)
+
+ma_dat <- viz_MA_data %>%
+  filter(k == 50)
+
+d_j  <- ma_dat %>% pull(d_j)   # effect size estimates
+se_j <- ma_dat %>% pull(se_j)  # standard errors
+
+length(d_j)
+```
+
+## 3. Creating your first MARC plot
+
+The simplest way to create a MARC plot is to pass vectors of effect sizes (`d_j`) and standard errors (`se_j`) to `viz_MARC()`:
+
+```{r basic-marc, fig.width=7, fig.height=5}
+p <- viz_MARC(d_j, se_j)
+p
+```
+
+### How to read this plot
+
+-   Each **dot in the bottom panel** is a study:
+
+    -   x-axis: **Standardized Mean Difference (SMD)**
+    -   y-axis: **Relative weight**. Studies with the largest weights will appear higher and larger on the y-axis.
+    -   larger and higher dots = more certain, more influential
+
+-   The **top panel** shows the meta-analytic **summary effect** as a large dot plus a “cloud” of plausible values for the true effect.
+
+-   This cloud is created by generating random values from a normal distribution with mean and standard deviation equal to the mean and standard error of the summary effect.
+
+    -   The wider the cloud, the more uncertainty around the summary effect.
+    -   The cloud is centered on the summary effect estimate.
+
+A gray text box explains the summary effect and its interval in plain language.
+
+## 4. Using a **metafor** model object
+
+This example uses the **metafor** package (Viechtbauer, 2010).
+You can install it from CRAN:
+
+```{r metafor-install, eval = FALSE}
+install.packages("metafor")
+```
+
+Documentation is available at:
+<https://cran.r-project.org/package=metafor>
+
+Now fit a fixed-effects model:
+
+```{r metafor-example, message = FALSE}
+library(metafor)
+
+res_fe <- rma.uni(yi = d_j, sei = se_j, method = "FE")
+res_fe
+```
+
+Where:
+
+-   `yi = d_j` → effect sizes
+-   `sei = se_j` → standard errors
+-   `method = "FE"` → fixed-effects model
+
+Now call `viz_MARC()` with the **metafor** object:
+
+```{r metafor-marc, fig.width=7, fig.height=5}
+viz_MARC(res_fe)
+```
+
+When you pass a **metafor** object, `viz_MARC()`:
+
+-   Extracts effect sizes and weights from the model
+-   Uses the model’s summary estimate and standard error
+-   Produces the same style of MARC plot
+
+## 5. Next steps
+
+From here, you can:
+
+-   Try `show_study_labels = TRUE` to add study labels
+-   Use your own dataset instead of `viz_MA_data`
+-   Explore customization options in the help page
+
+```{r help, eval = FALSE}
+?viz_MARC
+```
+
+```{r setup}
+library(MARCviz)
+```
