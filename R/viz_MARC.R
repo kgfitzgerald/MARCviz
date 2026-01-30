@@ -215,6 +215,12 @@ viz_MARC <- function(d_j = NULL,
         stop("method_object effect sizes and study_labels must be the same length.")
       }
     }
+    if length(study_labels) > 10 {
+      stop("Too many studies to include study labels. 
+              Use viz_MARC_interactive or create subplots with categories of studies. 
+              Plot is not intended for data exploration but for conveying findings to a greater audience.
+             ")
+    }
   }
   
   #Check that summary_only is True of False 
