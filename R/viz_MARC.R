@@ -215,7 +215,7 @@ viz_MARC <- function(d_j = NULL,
         stop("method_object effect sizes and study_labels must be the same length.")
       }
     }
-    if length(study_labels) > 10 {
+    if (length(study_labels) > 10) {
       stop("Too many studies to include study labels. 
               Use viz_MARC_interactive or create subplots with categories of studies. 
               Plot is not intended for data exploration but for conveying findings to a greater audience.
@@ -637,8 +637,7 @@ viz_MARC <- function(d_j = NULL,
           ),
           ggplot2::aes(y = 1, xdist = .dist),
           side = "both", scale = 0.4
-        )
-      +
+        ) +
         # add the navy blue summary dot
         ggplot2::geom_point(data = summary_data, 
                             ggplot2::aes(x = d_j, y = 1), size = 5,
