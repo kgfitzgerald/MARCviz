@@ -57,4 +57,4 @@ viz_MARC(d_j, se_j, type = "interactive")
 
 # License, Citation, Issues
 
-The `MARCviz` package was written by Kaitlyn G. Fitzgerald and Avery Charles. It is licensed under the [GNU General Public License](https://www.gnu.org/licenses/gpl-3.0.txt). For citation info, type `citation(package='MARCviz')` in R. To report any issues or bugs or to suggest enhancements to the package, please go [here](https://github.com/kgfitzgerald/MARCviz/issues).
+The `MARCviz` package was written by Kaitlyn G. Fitzgerald, Avery Charles, and Lydia Bradford. It is licensed under the [GNU General Public License](https://www.gnu.org/licenses/gpl-3.0.txt). For citation info, type `citation(package='MARCviz')` in R. To report any issues or bugs or to suggest enhancements to the package, please go [here](https://github.com/kgfitzgerald/MARCviz/issues).
