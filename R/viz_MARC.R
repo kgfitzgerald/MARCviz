@@ -14,6 +14,7 @@
 #' @param summary_only TRUE/FALSE indicator for whether to display the summary effect ONLY (default = FALSE)
 #' @param study_labels vector of study labels (optional)
 #' @param show_study_labels TRUE/FALSE indicator for whether to display study labels (default = FALSE)
+#' @param show_dot_annotation = TRUE/FALSE indicator for whether to display dot annotation (default = TRUE)
 #' @param seed integer used to set random seed before randomizing rows (optional)
 #' @param x_limits vector of x-axis limits c(xmin, xmax) to be used in plotting (optional)
 #' @param y_limits vector of y-axis limits c(ymin, ymax) to be used in plotting (optional)
@@ -106,6 +107,7 @@ viz_MARC <- function(d_j = NULL,
                      summary_only = FALSE,
                      study_labels = NULL,
                      show_study_labels = FALSE,
+                     show_dot_annotation = TRUE,
                      seed = NULL,
                      x_limits = NULL,
                      y_limits = NULL,
@@ -416,7 +418,6 @@ viz_MARC <- function(d_j = NULL,
       sample_n(size = k)
   }
   
-  
   # set max x value for plotting purposes
   if(is.null(x_limits)){
     #round max (abs) d value up to next tenth, then add .2 buffer (.1 for both sides)
@@ -519,6 +520,29 @@ viz_MARC <- function(d_j = NULL,
     # ggplot2::xlab("Standardized Mean Difference (SMD)")
     # ggplot2::xlab("Standardized Mean Difference (SMD)")
     
+    #### IF ADDING STUDY DOT ANNOTATION
+    if (show_dot_annotation == TRUE) {
+      max_point <- MA_data[which.max(MA_data$w_j_perc), ]
+      bottom <- bottom +
+        ggplot2::annotate(
+          "text",
+          x = max_point$d_j + 0.05,
+          y = max_point$w_j_perc - 0.02,
+          label = "Each dot summarizes evidence \nfrom 1 research study",
+          size = font_sizes[3] * 5 / 14,
+          hjust = 0
+        ) +
+        ggplot2::annotate(
+          "curve",
+          x = max_point$d_j,
+          y = max_point$w_j_perc,
+          xend = max_point$d_j + 0.05,
+          yend = max_point$w_j_perc - 0.02,
+          curvature = 0.3,
+          color = "grey80",
+          arrow = grid::arrow(length = unit(0.1, "inches"))
+        )
+    }
     
     #### IF DISPLAYING STUDY LABELS: DODGE BY DOT RADIUS ###
     if(show_study_labels == TRUE){
@@ -548,9 +572,8 @@ viz_MARC <- function(d_j = NULL,
       # Add study labels, offset in x direction by radius of dot
       # then repelled in y-direction only to avoid overlap
       bottom <- bottom + 
-        geom_text_repel(data = MA_data,   ggplot2::aes(x = d_j + radius_x_units,
-                                                       y = w_j_perc,
-                                                       label = paste("Study ", ID)),
+        geom_text_repel(data = MA_data,
+          ggplot2::aes(x = d_j + radius_x_units, y = w_j_perc, label = paste("Study ", ID)),
                         direction = "y",
                         size = 2)
     }
@@ -590,22 +613,20 @@ viz_MARC <- function(d_j = NULL,
                             color = dot_color) +
         # add the explanatory annotation for interpreting the summary
         geom_textbox(x = summary_data$d_j, y = y_limits_rect[1]*.96, 
-                     label = paste0("Based on the existing evidence, 
-                                        our best estimate of the true SMD for this 
-                                        intervention is ", 
-                                    round(summary_es, 2), 
-                                    ", with a plausible range spanning from ", 
-                                    round(CIlb, 2), " to ", round(CIub, 2), 
-                                    ". This summary estimate has a relative 
-                                        weight of 1.0, making it more certain than 
-                                        any of the individual estimates below."),
+                     label = paste0(
+                        "The center blue dot represents our best estimate 
+                        of the true SMD for this curriculum, based on existing evidence from ",
+                        k, " studies. The grey dots represent our uncertainty in that estimate; 
+                        95 times out of 100, the SMD for this curriculum is between ",
+                        round(CIlb, 2), " and ", round(CIub, 2), "."
+                     ),
                      alpha = 0.5,
                      size = font_sizes[3] * 5 / 14, 
                      family=font_type,
                      vjust = 1,
                      box.color = NA, 
                      fill = "white", 
-                     width =   ggplot2::unit(textbox_width, "inches")) +
+                     width = ggplot2::unit(textbox_width, "inches")) +
         ggplot2::theme_void() +
         ggplot2::guides(size = "none") +
         ggplot2::xlim(xmin, xmax)
@@ -613,7 +634,7 @@ viz_MARC <- function(d_j = NULL,
       p <- cowplot::plot_grid(top, bottom, ncol = 1, align = "v",
                               axis = "lr",
                               rel_heights = c(0.4,0.6))
-    } else{
+    } else {
       top <- ggplot(MA_data) +
         # remove axes and superfluous grids
         theme_light(base_line_size = .1,base_family=font_type) +
@@ -645,13 +666,13 @@ viz_MARC <- function(d_j = NULL,
         # add the explanatory annotation for interpreting the summary
         geom_textbox(x = summary_data$d_j, y = y_limits_rect[2]*1.25, 
                      #x = 0.05, y = y_limits_rect[2]*1.1,
-                     label = paste0("Based on the existing evidence from ", k,
-                                    " studies, our best estimate of the true SMD 
-                                      for this intervention is ", 
-                                    round(summary_es, 2), 
-                                    ", with a plausible range spanning from ", 
-                                    round(CIlb, 2), " to ", round(CIub, 2), 
-                                    "."),
+                     label = paste0(
+                        "The center blue dot represents our best estimate 
+                        of the true SMD for this curriculum, based on existing evidence from ",
+                        k, " studies. The grey dots represent our uncertainty in that estimate; 
+                        95 times out of 100, the SMD for this curriculum is between ",
+                        round(CIlb, 2), " and ", round(CIub, 2), "."
+                     ),
                      alpha = 0.5,
                      size = font_sizes[3] * 5 / 14 + 1, 
                      #hjust = 0,
