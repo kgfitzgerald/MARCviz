@@ -446,6 +446,14 @@ viz_MARC <- function(d_j = NULL,
     ymax <- y_limits[2]
   }
   
+  # to enable shared layout between Full and Summary plots
+  summary_text_size <- font_sizes[3] * 5 / 14
+  label_text_size   <- font_sizes[4] * 5 / 14
+  top_margin        <- 20
+  right_margin      <- 69
+  bottom_margin     <- 20
+  left_margin       <- 57
+  
   # Validate that max_dot_size is positive
   if (max_dot_size <= 0) {
     stop("max_dot_size must be a positive number.")
@@ -693,15 +701,14 @@ viz_MARC <- function(d_j = NULL,
                           vjust = 1, hjust = 0, label.size = 0,
                           x = 0.1, y = 0.55, size = font_sizes[4]*5/14 + 1) +
         theme(
-          axis.title.y = element_blank(),    # remove y-axis title
-          axis.text.y = element_blank(),     # remove y-axis text labels
-          axis.ticks.y = element_blank(),    # remove y-axis ticks
-          panel.grid.major = element_blank(), # remove major grid lines
-          panel.grid.minor = element_blank(),  # remove minor grid lines
-          
-          axis.text.x = element_text(size =12),
-          axis.title=element_text(size = 12),
-          plot.margin = margin(t = 20, r = 50, b = 20, l = 50)
+          axis.title.y = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks.y = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.text.x = element_text(size = 12),
+          axis.title = element_text(size = 12),
+          plot.margin = margin(t = top_margin, r = right_margin, b = bottom_margin, l = left_margin)
         )
       p <- top
     }
