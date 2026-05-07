@@ -645,7 +645,7 @@ viz_MARC <- function(d_j = NULL,
     } else {
       top <- ggplot(MA_data) +
         # remove axes and superfluous grids
-        theme_light(base_line_size = .1,base_family=font_type) +
+        theme_light(base_line_size = .1, base_family = font_type) +
         #create red/blue shading to distinguish negative/positive SMD regions
         geom_vline(xintercept = 0, alpha = 0.3) +
         ggplot2::annotate("rect", xmin = -Inf, xmax = 0, ymin = -Inf, ymax = Inf,
@@ -673,7 +673,7 @@ viz_MARC <- function(d_j = NULL,
                             ggplot2::aes(x = d_j, y = 1), size = 5,
                             color = dot_color) + 
         # add the explanatory annotation for interpreting the summary
-        geom_textbox(x = summary_data$d_j, y = y_limits_rect[1]*0.96, 
+        geom_textbox(x = summary_data$d_j, y = y_limits_rect[2]*1.25, 
                      label = paste0(
                         "The center blue dot represents our best estimate 
                         of the true SMD for this curriculum, based on existing evidence from ",
