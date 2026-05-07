@@ -657,7 +657,8 @@ viz_MARC <- function(d_j = NULL,
                           label = paste("Average SMD: ", 
                                         round(summary_es, digits),
                                         "\n# of Studies: ", k),
-                          hjust = 0, size = font_sizes[2]*5/14 + 2) +
+                          hjust = 0, size = font_sizes[2]*5/14,
+                          family = font_type) +
         labs(title = "SUMMARY OF THE EVIDENCE") +
         # add the cloud dots
         stat_dots(
@@ -672,8 +673,7 @@ viz_MARC <- function(d_j = NULL,
                             ggplot2::aes(x = d_j, y = 1), size = 5,
                             color = dot_color) + 
         # add the explanatory annotation for interpreting the summary
-        geom_textbox(x = summary_data$d_j, y = y_limits_rect[2]*1.25, 
-                     #x = 0.05, y = y_limits_rect[2]*1.1,
+        geom_textbox(x = summary_data$d_j, y = y_limits_rect[1]*0.96, 
                      label = paste0(
                         "The center blue dot represents our best estimate 
                         of the true SMD for this curriculum, based on existing evidence from ",
@@ -682,8 +682,7 @@ viz_MARC <- function(d_j = NULL,
                         round(CIlb, 2), " and ", round(CIub, 2), "."
                      ),
                      alpha = 0.5,
-                     size = font_sizes[3] * 5 / 14 + 1, 
-                     #hjust = 0,
+                     size = font_sizes[3] * 5 / 14, 
                      vjust = 1,
                      box.color = NA, 
                      fill = "white", 
@@ -696,10 +695,10 @@ viz_MARC <- function(d_j = NULL,
         # create labels to aid in interpretation of x-axis (SMD)
         ggplot2::annotate("label", label = "Decreased scores (SMD < 0)",
                           vjust = 1, hjust = 1, label.size = 0,
-                          x = -0.1, y = 0.55, size = font_sizes[4]*5/14 + 1) +
+                          x = -0.1, y = 0.6, size = font_sizes[4]*5/14) +
         ggplot2::annotate("label", label = "Increased scores (SMD > 0)",
                           vjust = 1, hjust = 0, label.size = 0,
-                          x = 0.1, y = 0.55, size = font_sizes[4]*5/14 + 1) +
+                          x = 0.1, y = 0.6, size = font_sizes[4]*5/14) +
         theme(
           axis.title.y = element_blank(),
           axis.text.y = element_blank(),
