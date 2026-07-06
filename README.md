@@ -48,11 +48,11 @@ Produce MARC plot (ggplot - default)
 viz_MARC(d_j, se_j)
 ```
 
-Produce MARC plot (ggplot)
+Produce interactive MARC plot (plotly)
 
 ```r
 #create interactive MARC plot (plotly object)
-viz_MARC(d_j, se_j, type = "interactive")
+viz_MARC_interactive(d_j, se_j)
 ```
 
 # License, Citation, Issues
