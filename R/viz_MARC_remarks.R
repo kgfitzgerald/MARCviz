@@ -1,110 +1,21 @@
-# This file is part of MARCviz, which is a free R package: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-#' @title viz_MARC
-#' @name viz_MARC
-#'
-#' @description Produces an static Meta-Analytic Rain Cloud (MARC) plot
-#'
-#' @param d_j vector of effect size estimates
-#' @param se_j vector of standard errors of effect size estimates
-#' @param w_j vector or matrix of user input weights for the effect size estimates
-#' @param method_obj metafor object used to fit the meta-analytic model, includes rma.uni(),rma(), rma.mh(),rma.peto(), rma.glmm() or rma.mv() (If not specified, rma.uni(yi=d_j,sei=se_j, method="FE") is used)
-#' @param summary_es user input meta-analytic summary effect size
-#' @param summary_se user input meta-analytic summary standard error
-#' @param confidence_level confidence level for interval written in plot annotation (default = 0.95)
-#' @param summary_only TRUE/FALSE indicator for whether to display the summary effect ONLY (default = FALSE)
-#' @param study_labels vector of study labels (optional)
-#' @param show_study_labels TRUE/FALSE indicator for whether to display study labels (default = FALSE)
-#' @param show_dot_annotation = TRUE/FALSE indicator for whether to display dot annotation (default = TRUE)
-#' @param seed integer used to set random seed before randomizing rows (optional)
-#' @param x_limits vector of x-axis limits c(xmin, xmax) to be used in plotting (optional)
-#' @param y_limits vector of y-axis limits c(ymin, ymax) to be used in plotting (optional)
-#' @param y_limits_rect vector of y-axis limits c(ymin, ymax) to be used in plotting white rectangle (optional)
-#' @param max_dot_size maximum dot size, used in ggplot static version (default = 10, reduce if summary too big)
-#' @param width_in desired width (in inches) for scaling purposes only
-#' @param height_in desired height (in inches) for scaling purposes only
-#' @param textbox_width controls width of textbox (default = 4 inches)
-#' @param font_sizes vector of 9 font sizes for annotations, in order: SUMMARY OF EVIDENCE, Average SMD & Weight, CI annotation, Increased/Decreased Scores, More/Less certain, Legend number labels, Legend Weight title, X-axis label, Y-axis label (default = c(14, 10, 8, 9, 8, 7, 10,16,16))
-#' @param digits number of digits to round summary effect size and confidence interval bounds to (default = 2)
-#' @param xinc controls the x axis increments for the standardized mean differences (default = .2)
-#' @param dot_color controls the color of the effect size dots using ggplot colors (default=navyblue)
-#' @param dot_trans controls the transparency of the effect size dots on a scacle of 0 to 1 (default = .5)
-#' @param font_type controls the font type for the text (default = "")
-#'
-#' @return a ggplot object
-#' @examples
-#' library(tidyverse)
-#' data(viz_MA_data)
-#' d_j <- viz_MA_data %>% filter(k == 100) %>% pull(d_j)
-#' se_j <- viz_MA_data %>% filter(k == 100) %>% pull(se_j)
-#' viz_MARC(d_j, se_j, seed = 437)
-#' viz_MARC(d_j, se_j, seed = 437, type = "static")
-#' @export
-#' @import dplyr
-#' @importFrom dplyr "%>%"
-#' @importFrom dplyr "sample_n"
-#' @importFrom dplyr "mutate"
-#' @import metafor
-#' @importFrom stats "qnorm"
-#' @importFrom stats "rnorm"
-#' @importFrom stats "dnorm"
-#' @importFrom tibble "add_row"
-#' @importFrom dplyr "case_when"
-#' @importFrom dplyr "filter"
-#' @importFrom dplyr "if_else"
-#' @importFrom plotly "plot_ly"
-#' @importFrom plotly "add_annotations"
-#' @importFrom plotly "add_trace"
-#' @importFrom plotly "layout"
-#' @importFrom plotly "subplot"
-#' @importFrom plotly "config"
-#' @importFrom dplyr "pull"
-#' @importFrom dplyr "slice"
-#' @importFrom cowplot "plot_grid"
-#' @import ggtext
-#' @importFrom ggtext geom_textbox
-#' @import ggplot2
-#' @importFrom ggdist stat_dots
-#' @importFrom ggrepel geom_text_repel
-#' @importFrom distributional dist_normal
-# below I commented out the individual ggplot2 actions,
-# I was getting NAMESPACE errors and they were fixed by calling ggplot2 by itself
-# #' @importFrom ggplot2 "ggplot"
-# #' @importFrom ggplot2 annotate
-# #' @importFrom ggplot2 "theme_light"
-# #' @importFrom ggplot2 "theme"
-# #' @importFrom ggplot2 "theme_void"
-# #' @importFrom ggplot2 "geom_vline"
-# #' @importFrom ggplot2 "geom_hline"
-# #' @importFrom ggplot2 "geom_point"
-# #' @importFrom ggplot2 "scale_size_area"
-# #' @importFrom ggplot2 "scale_y_continuous"
-# #' @importFrom ggplot2 "scale_x_continuous"
-# #' @importFrom ggplot2 "scale_fill_gradient"
-# #' @importFrom ggplot2 "geom_curve"
-# #' @importFrom ggplot2 "guides"
-# #' @importFrom ggplot2 "xlim"
-# #' @importFrom ggplot2 "ylim"
-# #' @importFrom ggplot2 aes
+# RECOMENDATION:
+# 1. Split viz_marc into two functions: cleaning and plotting
+# 2. Cleaning function should be an S3 generic, with different
+#    methods corresponding to different rma.* or even meta package.
+#    Should also only take model as an input, not d_j, se_j, etc.
+# 3. Depending on how complex cleaning is, utilize Next_Method
+#    for each rma.* and use rma as default method.
+# 4. Functionalize any cleaning/checks that are consistent
+#    between rma.*'s
+# 3. Call cleaning function inside plotting function
+# 4. Keep plotting function as consistent as possible
+#    between different models
+# 5. Return a ggplot object to cut down on number of arguments
+#    and allow end-users to adjust the output to their liking
 
-#------- for CRAN compatibility --------------
-# declaring global variables
-utils::globalVariables(c(
-  "w_j",
-  "w_j_perc",
-  "keep",
-  "max_marker_size",
-  "width",
-  "height",
-  "cloud_sample",
-  "diameter",
-  "radius",
-  "radius_x_units",
-  "ID",
-  ".dist"
-))
-
-# =========================================================================================
-# Below is the start of the function
+# meeting notes:
+# see how metaviz package sets up functionality
+# font sizing is clunky
 
 viz_MARC <- function(
   d_j = NULL,
@@ -133,7 +44,21 @@ viz_MARC <- function(
   dot_trans = .5,
   font_type = ""
 ) {
-  #If metafor object is passed through first:
+  # Q1: Whats the logic behind setting the method_obj to one of the
+  # first three inputs? In EXP3, code calls the columns individually.
+  # Believe its programmed to accept either a metafor object or data.
+  # If data, then does the metafor analysis for you.
+  #
+  # Is this the best approach? Cuts down on code, inputs, debug if
+  # choose one at expense of usability. Nonetheless, separate into
+  # function. Might have clarity about process based on multi meta
+  # points being added to plot. If need both, make it mutually
+  # exclusive like some dplyr functions or tidycensus get_* functions
+  #
+  # Q2: Are all these classes needed? Seems that "rma" is applied to
+  # all these cases like "data.frame" for tibble.
+
+  # If metafor object is passed through first:
   if (
     inherits(
       d_j,
@@ -143,7 +68,8 @@ viz_MARC <- function(
     method_obj <- d_j
     d_j <- NULL
   }
-  #If metafor object is passed through second:
+
+  # If metafor object is passed through second:
   if (
     inherits(
       se_j,
@@ -153,7 +79,8 @@ viz_MARC <- function(
     method_obj <- se_j
     se_j <- NULL
   }
-  #If metafor object is passed through third:
+
+  # If metafor object is passed through third:
   if (
     inherits(
       w_j,
@@ -175,17 +102,13 @@ viz_MARC <- function(
     }
   }
 
-  # for tidyverse
-  #  we are using dplyr functions
-  #  and using ggplot2
-
   #---------------- Error messages -----------------------------
 
   # Check that either effect sizes and standard errors are provided or a metafor object
   if (is.null(method_obj) & (is.null(d_j))) {
     stop(
-      "Missing Effect sizes or metafor object. 
-         Effect sizes or metafor object must be provided."
+      "Missing Effect sizes or metafor object.
+       Effect sizes or metafor object must be provided."
     )
   }
 
@@ -255,16 +178,19 @@ viz_MARC <- function(
         )
       }
     }
+
+    # TODO: make a warning instead
     if (length(study_labels) > 10) {
       stop(
-        "Too many studies to include study labels. 
-              Use viz_MARC_interactive or create subplots with categories of studies. 
-              Plot is not intended for data exploration but for conveying findings to a greater audience.
-             "
+        "Too many studies to include study labels.
+            Use viz_MARC_interactive or create subplots with categories of studies.
+            Plot is not intended for data exploration but for conveying findings to a greater audience.
+           "
       )
     }
   }
 
+  # TODO: move up the chain
   #Check that summary_only is True of False
   if (!summary_only %in% c(TRUE, FALSE)) {
     stop("The 'summary_only' argument must be either 'TRUE' or 'FALSE'.")
@@ -275,6 +201,7 @@ viz_MARC <- function(
     stop("The 'show_study_labels' argument must be either 'TRUE' or 'FALSE'.")
   }
 
+  # TODO: likely can rely on ggplot to handle this
   #Check x_limits, y_limits, and y_limits_rect are a numerica vector of length 2
   lim <- list(x_limits, y_limits, y_limits_rect)
   lim_name <- c("x_limits", "y_limits", "y_limits_rect")
@@ -291,6 +218,7 @@ viz_MARC <- function(
     i <- i + 1
   }
 
+  # TODO: likely can rely on ggplot to handle
   #Check that max_dot_size, width_in, height_in, textbox_width, digits, and dot_trans are all a single numeric value
   lim <- list(
     max_dot_size,
@@ -322,6 +250,8 @@ viz_MARC <- function(
     stop("Font sizes must be a numeric vector with 9 sizes.")
   }
 
+  # TODO: likely can rely on ggplot to handle
+
   # Check that the dot_color passed through and font_type are string types
 
   if (!is.character(dot_color)) {
@@ -329,8 +259,8 @@ viz_MARC <- function(
   }
   if (!is.character(font_type)) {
     stop(
-      "font_type must be in the format of a string with 
-         the font type's given name"
+      "font_type must be in the format of a string with
+       the font type's given name"
     )
   }
 
@@ -377,7 +307,7 @@ viz_MARC <- function(
   } else {
     stop(
       "No effect sizes and standard errors or summary effecs and standard errors
-         or metafor object provided."
+       or metafor object provided."
     )
   }
 
@@ -388,7 +318,7 @@ viz_MARC <- function(
     if (inherits(method_obj, "rma.mv")) {
       stop(
         "It appears your meta-analysis may have dependecies but no study labels are provided.
-           Add study labels or adjust your meta-analysis method."
+         Add study labels or adjust your meta-analysis method."
       )
     }
     k <- dim(MA_data)[1]
@@ -417,7 +347,7 @@ viz_MARC <- function(
     }
   }
 
-  MA_data <- MA_data %>%
+  MA_data <- MA_data |>
     mutate(w_j_perc = w_j / sum(w_j))
 
   #store maximum (absolute) effect size
@@ -453,7 +383,7 @@ viz_MARC <- function(
     stop("Length of study_labels does not match length of d_j.")
   }
 
-  MA_data <- MA_data %>%
+  MA_data <- MA_data |>
     #create ID variable to be used as y-axis labels
     mutate(ID = factor(study_labels, ordered = TRUE))
 
@@ -463,7 +393,7 @@ viz_MARC <- function(
   #moved this from earlier on to later
   if (!is.null(seed)) {
     set.seed(seed)
-    MA_data <- MA_data %>%
+    MA_data <- MA_data |>
       sample_n(size = k)
   }
 
@@ -668,7 +598,7 @@ viz_MARC <- function(
         yend = max_point$w_j_perc - 0.02,
         curvature = 0.3,
         color = "grey80",
-        arrow = grid::arrow(length = unit(0.1, "inches"))
+        arrow = grid::arrow(length = grid::unit(0.1, "inches"))
       )
   }
 
@@ -753,7 +683,7 @@ viz_MARC <- function(
         family = font_type
       ) +
 
-      stat_dots(
+      ggdist::stat_dots(
         data = tibble::tibble(
           .dist = distributional::dist_normal(summary_es, summary_se)
         ),
@@ -773,11 +703,11 @@ viz_MARC <- function(
         x = summary_data$d_j,
         y = y_limits_rect[1] * .96,
         label = paste0(
-          "The center blue dot represents our best estimate 
-                        of the true SMD for this curriculum, based on existing evidence from ",
+          "The center blue dot represents our best estimate
+                      of the true SMD for this curriculum, based on existing evidence from ",
           k,
-          " studies. The grey dots represent our uncertainty in that estimate; 
-                        95 times out of 100, the SMD for this curriculum is between ",
+          " studies. The grey dots represent our uncertainty in that estimate;
+                      95 times out of 100, the SMD for this curriculum is between ",
           round(CIlb, 2),
           " and ",
           round(CIub, 2),
@@ -844,7 +774,7 @@ viz_MARC <- function(
       ) +
       labs(title = "SUMMARY OF THE EVIDENCE") +
       # add the cloud dots
-      stat_dots(
+      ggdist::stat_dots(
         data = tibble::tibble(
           .dist = distributional::dist_normal(summary_es, summary_se)
         ),
@@ -864,11 +794,11 @@ viz_MARC <- function(
         x = summary_data$d_j,
         y = y_limits_rect[2] * 1.25,
         label = paste0(
-          "The center blue dot represents our best estimate 
-                        of the true SMD for this curriculum, based on existing evidence from ",
+          "The center blue dot represents our best estimate
+                      of the true SMD for this curriculum, based on existing evidence from ",
           k,
-          " studies. The grey dots represent our uncertainty in that estimate; 
-                        95 times out of 100, the SMD for this curriculum is between ",
+          " studies. The grey dots represent our uncertainty in that estimate;
+                      95 times out of 100, the SMD for this curriculum is between ",
           round(CIlb, 2),
           " and ",
           round(CIub, 2),

@@ -1,0 +1,949 @@
+---
+title: "Visualizations"
+subtitle: "32 Visualizations"
+format: 
+  html:
+    self-contained: true
+    toc: true
+    toc_float: true
+    number-section: false
+    highlight: tango
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, echo = F}
+knitr::opts_chunk$set(echo = F, message = F, warning = F)
+```
+
+```{r}
+library(here)
+library(tidyverse)
+library(metafor)
+library(ggrepel)
+library(ggdist)
+library(distributional)
+library(kableExtra)
+library(ggtext)
+
+# Read data created in generate_MA_data.R
+viz_MA_data <- readRDS(here("exp3_vote_counting", "data", "exp3_ma_data.RDS"))
+
+# Source files for creating each visualization type
+source(here("exp3_vote_counting", "viz_MARC_exp3.R"))
+```
+
+### Summary of Meta-Analytic Data by Level of Factor B
+
++ We generated 100,000 meta-analytic datasets with $k = 10$ studies (according to the model specified in project narrative, assumes $\delta = 0.15$). 
++ Of those 100,000, we filtered to keep only the ones that had the desired number of negative effects for factor A (0, 1, 3, 6) and those that have a summary effect that rounds to delta = 0.15. This results in 2,456 meta-analytic datasets. 
++ We plotted each of the 2,456 datasets (using the Full MARC plot version), and chose 1 meta-analytic dataset per level of factor A that represented a "typical" distribution of effect sizes among all plots with the given number of negative effects.
++ The 4 meta-analytic datasets chosen had the following IDs: 
+
+| ma_id | A |
+|--------| --|
+| 1796 | 0 negative effects |
+| 377 | 1 negative effect |
+| 104 | 3 negative effects |
+| 31284 | 6 negative effects| 
+
++ Each of the 4 meta-analytic datasets chosen for Factor A are re-weighted to achieve each of the 4 levels of Factor B. Therefore, there are a total of 16 meta-analytic datasets used to represent the 16 A x B experimental conditions.
++ The following table shows the meta-analytic summary info for the 16 datasets used in this experiment:
+
+```{r}
+summary_data <- viz_MA_data |>
+  filter(ma_id %in% c(1796, 377, 104, 31284)) |>
+  group_by(B, ma_id, sig_level, neg_count) |>
+  summarize(
+    es = weighted.mean(d_j, w_j_rescaled),
+    W = sum(w_j_rescaled),
+    se = sqrt(1 / sum(w_j_rescaled))
+  ) |>
+  mutate(prob_pos = pnorm(0, es, se, lower.tail = FALSE))
+
+conditions <- summary_data |>
+  group_by(B) |>
+  summarize(
+    avg_es = mean(es),
+    avg_W = mean(W),
+    avg_se = mean(se),
+    avg_prob = mean(prob_pos)
+  )
+
+conditions |>
+  kable() |>
+  kable_minimal()
+```
+
++ **B** = 4 levels of Factor B.
++ **avg_es** = average meta-analytic summary effect size for this experimental condition.
++ **avg_W** = average sum of weights for this experimental condition.
++ **avg_se** = average standard error of the summary effect for this experimental condition.
++ **avg_prob** = average $P(\hat{\delta} > 0)$ for the corresponding summary effect & SE specified by this experimental condition.
+
+Below we show an example visualization for each of the 16 experimental conditions.
+
+# B = 1 (`r round(conditions$avg_prob[1],3)` prob $\delta$>0)
+
+```{r}
+######################## B = 1 ############################
+B1_data <- viz_MA_data %>%
+  filter(B == 1)
+```
+
+#### Factor A1: 0 negative effects
+```{r}
+#| fig.width: 7.5
+#| fig.height: 5
+data <- B1_data |>
+  filter(neg_count == 0, ma_id == 1796) |>
+  slice(1:10)
+
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A0_b1_F.png"),
+  width = 7.5,
+  height = 5,
+  dpi = 700
+)
+```
+
+```{r}
+#| fig.width: 7.5
+#| fig.height: 3.2
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  summary_only = TRUE,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A0_b1_S.png"),
+  width = 7.5,
+  height = 3.2,
+  dpi = 700
+)
+```
+
+#### Factor A2: 1 negative effect
+```{r}
+#| fig.width: 7.5
+#| fig.height: 5
+data <- B1_data |>
+  filter(neg_count == 1, ma_id == 377) |>
+  slice(1:10)
+
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A1_b1_F.png"),
+  width = 7.5,
+  height = 5,
+  dpi = 700
+)
+```
+
+```{r}
+#| fig.width: 7.5
+#| fig.height: 3.2
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  summary_only = TRUE,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A1_b1_S.png"),
+  width = 7.5,
+  height = 3.2,
+  dpi = 700
+)
+```
+
+#### Factor A3: 3 negative effects
+```{r}
+#| fig.width: 7.5
+#| fig.height: 5
+data <- B1_data |>
+  filter(neg_count == 3, ma_id == 104) |>
+  slice(1:10)
+
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A3_b1_F.png"),
+  width = 7.5,
+  height = 5,
+  dpi = 700
+)
+```
+
+```{r}
+#| fig.width: 7.5
+#| fig.height: 3.2
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  summary_only = TRUE,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A3_b1_S.png"),
+  width = 7.5,
+  height = 3.2,
+  dpi = 700
+)
+```
+
+```{r, echo = FALSE, eval = FALSE}
+# is this needed?
+
+library(metaviz)
+viz_forest(
+  x = data.frame(d_j = data$d_j, se_j = data$se_j_rescaled),
+  study_labels = c(1:10),
+  group = c(1, 1, 2, 1, 3, 1, 2, 3, 3, 1)
+)
+```
+
+
+#### Factor A4: 6 negative effects
+```{r}
+#| fig.width: 7.5
+#| fig.height: 5
+data <- B1_data |>
+  filter(neg_count == 6, ma_id == 31284) |>
+  slice(1:10)
+
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A6_b1_F.png"),
+  width = 7.5,
+  height = 5,
+  dpi = 700
+)
+```
+
+```{r, eval = FALSE, echo = FALSE}
+# is this needed?
+
+library(metaviz)
+x <- data |> select(d = d_j, se = se_j)
+viz_forest(x)
+
+viz_forest(d = data$d_j, se = data$se_j)
+viz_forest(data$d_j, data$se_j)
+viz_forest(x = data$d_j, se = data$se_j)
+
+x <- data |>
+  transmute(d = d_j, se = se_j) |>
+  as.data.frame()
+
+viz_forest(x) +
+  labs(x = "SMD")
+```
+
+
+```{r}
+#| fig.width: 7.5
+#| fig.height: 3.2
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  summary_only = TRUE,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A6_b1_S.png"),
+  width = 7.5,
+  height = 3.2,
+  dpi = 700
+)
+```
+
+# B = 2 (`r round(conditions$avg_prob[2],3)` prob $\delta$>0)
+
+```{r}
+######################## B = 2 ############################
+B2_data <- viz_MA_data %>%
+  filter(B == 2)
+```
+
+#### Factor A1: 0 negative effects
+```{r}
+#| fig.width: 7.5
+#| fig.height: 5
+data <- B2_data |>
+  filter(neg_count == 0, ma_id == 1796) |>
+  slice(1:10)
+
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A0_b2_F.png"),
+  width = 7.5,
+  height = 5,
+  dpi = 700
+)
+```
+
+```{r}
+#| fig.width: 7.5
+#| fig.height: 3.2
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  summary_only = TRUE,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A0_b2_S.png"),
+  width = 7.5,
+  height = 3.2,
+  dpi = 700
+)
+```
+
+#### Factor A2: 1 negative effect
+```{r}
+#| fig.width: 7.5
+#| fig.height: 5
+data <- B2_data |>
+  filter(neg_count == 1, ma_id == 377) |>
+  slice(1:10)
+
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A1_b2_F.png"),
+  width = 7.5,
+  height = 5,
+  dpi = 700
+)
+```
+
+```{r}
+#| fig.width: 7.5
+#| fig.height: 3.2
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  summary_only = TRUE,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A1_b2_S.png"),
+  width = 7.5,
+  height = 3.2,
+  dpi = 700
+)
+```
+
+#### Factor A3: 3 negative effects
+```{r}
+#| fig.width: 7.5
+#| fig.height: 5
+data <- B2_data |>
+  filter(neg_count == 3, ma_id == 104) |>
+  slice(1:10)
+
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A3_b2_F.png"),
+  width = 7.5,
+  height = 5,
+  dpi = 700
+)
+```
+
+```{r}
+#| fig.width: 7.5
+#| fig.height: 3.2
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  summary_only = TRUE,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A3_b2_S.png"),
+  width = 7.5,
+  height = 3.2,
+  dpi = 700
+)
+```
+
+#### Factor A4: 6 negative effects
+```{r}
+#| fig.width: 7.5
+#| fig.height: 5
+data <- B2_data |>
+  filter(neg_count == 6, ma_id == 31284) |>
+  slice(1:10)
+
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A6_b2_F.png"),
+  width = 7.5,
+  height = 5,
+  dpi = 700
+)
+```
+
+```{r}
+#| fig.width: 7.5
+#| fig.height: 3.2
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  summary_only = TRUE,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A6_b2_S.png"),
+  width = 7.5,
+  height = 3.2,
+  dpi = 700
+)
+```
+
+# B = 3 (`r round(conditions$avg_prob[3],3)` prob $\delta$>0)
+
+```{r}
+######################## B = 3 ############################
+B3_data <- viz_MA_data %>%
+  filter(B == 3)
+```
+
+#### Factor A1: 0 negative effects
+```{r}
+#| fig.width: 7.5
+#| fig.height: 5
+data <- B3_data |>
+  filter(neg_count == 0, ma_id == 1796) |>
+  slice(1:10)
+
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A0_b3_F.png"),
+  width = 7.5,
+  height = 5,
+  dpi = 700
+)
+```
+
+```{r}
+#| fig.width: 7.5
+#| fig.height: 3.2
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  summary_only = TRUE,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A0_b3_S.png"),
+  width = 7.5,
+  height = 3.2,
+  dpi = 700
+)
+```
+
+#### Factor A2: 1 negative effect
+```{r}
+#| fig.width: 7.5
+#| fig.height: 5
+data <- B3_data |>
+  filter(neg_count == 1, ma_id == 377) |>
+  slice(1:10)
+
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A1_b3_F.png"),
+  width = 7.5,
+  height = 5,
+  dpi = 700
+)
+```
+
+```{r}
+#| fig.width: 7.5
+#| fig.height: 3.2
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  summary_only = TRUE,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A1_b3_S.png"),
+  width = 7.5,
+  height = 3.2,
+  dpi = 700
+)
+```
+
+#### Factor A3: 3 negative effects
+```{r}
+#| fig.width: 7.5
+#| fig.height: 5
+data <- B3_data |>
+  filter(neg_count == 3, ma_id == 104) |>
+  slice(1:10)
+
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A3_b3_F.png"),
+  width = 7.5,
+  height = 5,
+  dpi = 700
+)
+```
+
+```{r}
+#| fig.width: 7.5
+#| fig.height: 3.2
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  summary_only = TRUE,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A3_b3_S.png"),
+  width = 7.5,
+  height = 3.2,
+  dpi = 700
+)
+```
+
+#### Factor A4: 6 negative effects
+```{r}
+#| fig.width: 7.5
+#| fig.height: 5
+data <- B3_data |>
+  filter(neg_count == 6, ma_id == 31284) |>
+  slice(1:10)
+
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A6_b3_F.png"),
+  width = 7.5,
+  height = 5,
+  dpi = 700
+)
+```
+
+```{r}
+#| fig.width: 7.5
+#| fig.height: 3.2
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  summary_only = TRUE,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A6_b3_S.png"),
+  width = 7.5,
+  height = 3.2,
+  dpi = 700
+)
+```
+
+# B = 4 (`r round(conditions$avg_prob[4],3)` prob $\delta$>0)
+
+```{r}
+######################## B = 4 ############################
+B4_data <- viz_MA_data %>%
+  filter(B == 4)
+```
+
+#### Factor A1: 0 negative effects
+```{r}
+#| fig.width: 7.5
+#| fig.height: 5
+data <- B4_data |>
+  filter(neg_count == 0, ma_id == 1796) |>
+  slice(1:10)
+
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A0_b4_F.png"),
+  width = 7.5,
+  height = 5,
+  dpi = 700
+)
+```
+
+```{r}
+#| fig.width: 7.5
+#| fig.height: 3.2
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  summary_only = TRUE,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A0_b4_S.png"),
+  width = 7.5,
+  height = 3.2,
+  dpi = 700
+)
+```
+
+#### Factor A2: 1 negative effect
+```{r}
+#| fig.width: 7.5
+#| fig.height: 5
+data <- B4_data |>
+  filter(neg_count == 1, ma_id == 377) |>
+  slice(1:10)
+
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A1_b4_F.png"),
+  width = 7.5,
+  height = 5,
+  dpi = 700
+)
+```
+
+```{r}
+#| fig.width: 7.5
+#| fig.height: 3.2
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  summary_only = TRUE,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A1_b4_S.png"),
+  width = 7.5,
+  height = 3.2,
+  dpi = 700
+)
+```
+
+#### Factor A3: 3 negative effects
+```{r}
+#| fig.width: 7.5
+#| fig.height: 5
+data <- B4_data |>
+  filter(neg_count == 3, ma_id == 104) |>
+  slice(1:10)
+
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A3_b4_F.png"),
+  width = 7.5,
+  height = 5,
+  dpi = 700
+)
+```
+
+```{r}
+#| fig.width: 7.5
+#| fig.height: 3.2
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  summary_only = TRUE,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A3_b4_S.png"),
+  width = 7.5,
+  height = 3.2,
+  dpi = 700
+)
+```
+
+#### Factor A4: 6 negative effects
+```{r}
+#| fig.width: 7.5
+#| fig.height: 5
+data <- B4_data |>
+  filter(neg_count == 6, ma_id == 31284) |>
+  slice(1:10)
+
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A6_b4_F.png"),
+  width = 7.5,
+  height = 5,
+  dpi = 700
+)
+```
+
+```{r}
+#| fig.width: 7.5
+#| fig.height: 3.2
+viz_MARC_exp3(
+  d_j = data$d_j,
+  se_j = data$se_j_rescaled,
+  summary_only = TRUE,
+  study_labels = c(1:10),
+  seed = 2427,
+  y_limits_rect = c(0.78, 1.22),
+  x_limits = c(-1, 1),
+  font_sizes = c(10, 8, 6, 8, 8, 7, 10),
+  max_dot_size = 5
+)
+
+ggsave(
+  here("exp3_vote_counting", "images", "A6_b4_S.png"),
+  width = 7.5,
+  height = 3.2,
+  dpi = 700
+)
+```
